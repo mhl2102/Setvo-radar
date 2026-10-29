@@ -1,6 +1,7 @@
 """Regressões críticas do app desktop, sem abrir janela durante os testes."""
 import os
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 import tempfile
 import unittest
@@ -38,22 +39,22 @@ class DesktopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             original = Path(folder) / 'RadarStartupIntelligence'
             original.mkdir()
-            with sqlite3.connect(original / 'radar.db') as db:
+            with closing(sqlite3.connect(original / 'radar.db')) as db, db:
                 db.execute('CREATE TABLE evidence (test INTEGER)')
                 db.execute('INSERT INTO evidence VALUES (42)')
             (original / 'config.yaml').write_text('feeds: []', encoding='utf-8')
             current = Path(folder) / 'SetvoIntelligence'
             current.mkdir()
             desktop.migrate_legacy_data(current)
-            with sqlite3.connect(current / 'radar.db') as db:
+            with closing(sqlite3.connect(current / 'radar.db')) as db, db:
                 self.assertEqual(db.execute('SELECT test FROM evidence').fetchone()[0], 42)
             self.assertEqual((current / 'config.yaml').read_text(encoding='utf-8'), 'feeds: []')
             self.assertTrue((original / 'radar.db').exists())
             # A migração nunca sobrescreve dados já modificados no Setvo.
-            with sqlite3.connect(current / 'radar.db') as db:
+            with closing(sqlite3.connect(current / 'radar.db')) as db, db:
                 db.execute('UPDATE evidence SET test=43')
             desktop.migrate_legacy_data(current)
-            with sqlite3.connect(current / 'radar.db') as db:
+            with closing(sqlite3.connect(current / 'radar.db')) as db, db:
                 self.assertEqual(db.execute('SELECT test FROM evidence').fetchone()[0], 43)
 
     def test_site_brand_matches_setvo(self):
