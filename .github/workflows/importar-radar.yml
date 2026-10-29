@@ -1,0 +1,48 @@
+name: Importar código do Radar
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'import/radar_v2_source.b64'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Extrair código e verificar caminhos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import base64, tarfile
+          archive = Path('import/radar_v2_source.b64')
+          if not archive.exists():
+              print('Arquivo de importação já removido; nada a fazer.')
+              raise SystemExit(0)
+          payload = base64.b64decode(archive.read_text(encoding='ascii').strip(), validate=True)
+          with tarfile.open(fileobj=BytesIO(payload), mode='r:xz') as tf:
+              files = tf.getmembers()
+              for item in files:
+                  target = Path(item.name)
+                  if not item.isfile() or target.is_absolute() or '..' in target.parts or not target.parts:
+                      raise ValueError(f'Entrada não permitida: {item.name}')
+                  if target.parts[0] in ('.git', '.github', 'import'):
+                      raise ValueError(f'Pasta reservada: {item.name}')
+              tf.extractall('.', members=files, filter='data')
+          archive.unlink()
+          print(f'Importados {len(files)} arquivos')
+          PY
+      - name: Salvar código-fonte na branch main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: importar código completo Radar Startup Intelligence v2"
+            git push origin HEAD:main
+          fi
