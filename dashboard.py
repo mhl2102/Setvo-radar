@@ -244,6 +244,15 @@ class Handler(BaseHTTPRequestHandler):
             self._send({'error': 'Falha ao consultar dados locais'}, 500)
 
     def do_POST(self):
+        # POST exige JSON; bloqueia envios simples de páginas externas
+        # (CSRF contra o serviço local sem autenticação).
+        if self.headers.get('Content-Type', '').split(';')[0].strip().lower() != 'application/json':
+            self._send({'error': 'A API exige application/json'}, 415)
+            return
+        origin = self.headers.get('Origin')
+        if origin and origin != f'http://127.0.0.1:{self.server.server_port}' and origin != f'http://localhost:{self.server.server_port}':
+            self._send({'error': 'Origem não permitida'}, 403)
+            return
         path = urlparse(self.path).path
         length = self.headers.get('Content-Length', '0')
         try:

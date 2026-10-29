@@ -36,8 +36,9 @@ jobs:
       - name: Homologação do executável sem interface
         run: |
           $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP 'RadarDesktopSmoke'
-          & ".\dist\RadarStartupIntelligence\RadarStartupIntelligence.exe" --self-test
-          if ($LASTEXITCODE -ne 0) { throw "Smoke test falhou ($LASTEXITCODE)" }
+          $exe = Join-Path $PWD 'dist\RadarStartupIntelligence\RadarStartupIntelligence.exe'
+          $process = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) { throw "Smoke test falhou ($($process.ExitCode))" }
       - name: Montar ZIP portátil
         run: Compress-Archive -Path 'dist/RadarStartupIntelligence' -DestinationPath 'RadarStartupIntelligence-Portable.zip' -Force
       - name: Instalar compilador do instalador (Inno Setup)

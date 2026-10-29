@@ -27,7 +27,11 @@ def data_dir():
 def configure_environment(demo=False):
     directory = data_dir()
     directory.mkdir(parents=True, exist_ok=True)
-    os.environ.setdefault('RADAR_DB', str(directory / ('radar_demo.db' if demo else 'radar.db')))
+    if demo:
+        # Nunca permitir que --demo escreva no banco real, mesmo com RADAR_DB definido.
+        os.environ['RADAR_DB'] = str(directory / 'radar_demo.db')
+    else:
+        os.environ.setdefault('RADAR_DB', str(directory / 'radar.db'))
     os.environ['RADAR_DEMO'] = '1' if demo else '0'
     return directory
 
