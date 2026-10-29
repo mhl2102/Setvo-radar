@@ -1,6 +1,12 @@
 name: Setvo Windows - testes e instalador
 on:
   workflow_dispatch:
+    inputs:
+      assinar:
+        description: 'Assinar com Microsoft Artifact Signing (requer conta e identidade verificadas)'
+        type: boolean
+        required: true
+        default: false
   push:
     branches: [main]
     paths:
@@ -12,6 +18,7 @@ on:
       - '.github/workflows/windows-desktop.yml'
 permissions:
   contents: read
+  id-token: write
 jobs:
   windows:
     runs-on: windows-latest
@@ -32,7 +39,31 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Gerar executável portátil Windows
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --name Setvo --collect-all webview --add-data "web;web" --add-data "config.yaml;." desktop.py
+          pyinstaller --noconfirm --clean --noupx --onedir --windowed --name Setvo --collect-all webview --add-data "web;web" --add-data "config.yaml;." desktop.py
+      - name: Autenticar Microsoft Artifact Signing (somente distribuicao assinada)
+        if: ${{ inputs.assinar }}
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Assinar executavel Setvo.exe com identidade verificada
+        if: ${{ inputs.assinar }}
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_CERTIFICATE_PROFILE }}
+          files: ${{ github.workspace }}\dist\Setvo\Setvo.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+      - name: Verificar assinatura do executavel
+        if: ${{ inputs.assinar }}
+        run: |
+          $exe = Join-Path $PWD 'dist\Setvo\Setvo.exe'
+          $sig = Get-AuthenticodeSignature -FilePath $exe
+          if ($sig.Status -ne 'Valid') { throw "Assinatura do Setvo.exe nao e valida: $($sig.Status)" }
       - name: Homologação do executável sem interface
         run: |
           $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP 'SetvoDesktopSmoke'
@@ -47,12 +78,64 @@ jobs:
         run: |
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" 'installer\Setvo.iss'
           if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+      - name: Assinar instalador com identidade verificada (somente distribuicao assinada)
+        if: ${{ inputs.assinar }}
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_CERTIFICATE_PROFILE }}
+          files-folder: ${{ github.workspace }}\release
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+      - name: Verificar assinatura do instalador (somente distribuicao assinada)
+        if: ${{ inputs.assinar }}
+        run: |
+          $instaladores = @(Get-ChildItem -Path 'release' -Filter '*.exe')
+          if ($instaladores.Count -eq 0) { throw 'Instalador nao encontrado' }
+          foreach ($arquivo in $instaladores) {
+            $assinatura = Get-AuthenticodeSignature -FilePath $arquivo.FullName
+            if ($assinatura.Status -ne 'Valid') { throw "Assinatura invalida em $($arquivo.Name): $($assinatura.Status)" }
+          }
+      - name: Verificacao antivirus quando Microsoft Defender esta disponivel
+        run: |
+          $report = 'Defender indisponivel neste runner: verificacao antivirus nao executada.'
+          $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
+          if ($null -ne $status -and $status.AntivirusEnabled) {
+            Start-MpScan -ScanType CustomScan -ScanPath (Join-Path $PWD 'dist\Setvo') -ErrorAction Stop
+            Start-MpScan -ScanType CustomScan -ScanPath (Join-Path $PWD 'release') -ErrorAction Stop
+            $report = 'Microsoft Defender: exames solicitados e concluidos sem erro.'
+          }
+          $report | Set-Content -Path 'ANTIVIRUS_SCAN.txt' -Encoding utf8
+          Write-Host $report
+      - name: Gerar hashes SHA-256 e status da assinatura
+        run: |
+          $arquivos = @((Get-Item 'Setvo-Portable.zip')) + @(Get-ChildItem 'release' -Filter '*.exe')
+          if ($arquivos.Count -lt 2) { throw 'Arquivos para verificacao nao encontrados' }
+          $hashes = foreach ($arquivo in $arquivos) {
+            $hash = (Get-FileHash -Algorithm SHA256 -Path $arquivo.FullName).Hash.ToLowerInvariant()
+            "$hash  $($arquivo.Name)"
+          }
+          $hashes | Set-Content -Path 'SHA256SUMS.txt' -Encoding ascii
+          $assinatura = Get-AuthenticodeSignature -FilePath 'dist\Setvo\Setvo.exe'
+          "Setvo.exe: $($assinatura.Status)" | Set-Content 'ASSINATURA_STATUS.txt' -Encoding utf8
+          foreach ($instalador in (Get-ChildItem 'release' -Filter '*.exe')) {
+            $sig = Get-AuthenticodeSignature -FilePath $instalador.FullName
+            "$($instalador.Name): $($sig.Status)" | Add-Content 'ASSINATURA_STATUS.txt'
+          }
+          Get-Content 'SHA256SUMS.txt'
+          Get-Content 'ASSINATURA_STATUS.txt'
       - name: Publicar artefatos executáveis
         uses: actions/upload-artifact@v4
         with:
-          name: Setvo-Inteligencia-de-Mercado-Windows
+          name: Setvo-Windows-${{ inputs.assinar && 'ASSINADO' || 'PREVIEW-NAO-ASSINADO' }}
           path: |
             Setvo-Portable.zip
             release/*.exe
+            SHA256SUMS.txt
+            ASSINATURA_STATUS.txt
+            ANTIVIRUS_SCAN.txt
           if-no-files-found: error
           retention-days: 14

@@ -34,3 +34,7 @@ py desktop.py --self-test
 Para construir o instalador, **o build precisa rodar no Windows**. O workflow `.github/workflows/windows-desktop.yml` instala dependências, roda testes Python, empacota via PyInstaller, verifica o executável e cria o instalador com Inno Setup.
 
 > A aprovação automatizada do build **não equivale** à homologação visual e funcional em um computador real. Validar abertura da janela, WebView2, rede, coleta, exportação CSV/JSON e instalação/desinstalação em Windows 10/11 antes de uma distribuição pública.
+
+## Aviso de download perigoso / SmartScreen
+
+O instalador gerado automaticamente no modo normal e **PREVIEW NAO ASSINADA**. Isso pode causar alertas do Edge, Chrome ou SmartScreen, mesmo sem deteccao de malware. Nao desative antivirus nem SmartScreen para instalar. Consulte [SECURITY_DOWNLOADS.md](SECURITY_DOWNLOADS.md) para verificar origem, hashes SHA-256, estado da assinatura e procedimento de assinatura do publicador. Quando existir identidade verificada e conta de Microsoft Artifact Signing configurada, um build manual permite `assinar=true`; a assinatura nao garante reputacao imediata. Se o antivirus identificar uma ameaca especifica, nao execute o arquivo ate investigar.
