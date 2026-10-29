@@ -1,4 +1,4 @@
-name: Validar Radar Startup Intelligence
+name: Validar Setvo Intelligence
 on:
   push:
     branches: [main]
