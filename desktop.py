@@ -5,6 +5,7 @@ Modo --self-test: verifica o backend no processo empacotado, sem abrir interface
 Modo --collect: subprocesso sem GUI utilizado pelo botão Atualizar radar.
 """
 import argparse
+from contextlib import closing
 import json
 import os
 import sys
@@ -37,8 +38,8 @@ def migrate_legacy_data(directory):
         if source.is_file() and not target.exists():
             # SQLite backup inclui transações do WAL do banco antigo quando acessível.
             try:
-                with sqlite3.connect(f'file:{source.as_posix()}?mode=ro', uri=True) as src:
-                    with sqlite3.connect(target) as dst:
+                with closing(sqlite3.connect(f'file:{source.as_posix()}?mode=ro', uri=True)) as src:
+                    with closing(sqlite3.connect(target)) as dst:
                         src.backup(dst)
             except (OSError, sqlite3.Error) as exc:
                 target.unlink(missing_ok=True)
