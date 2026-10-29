@@ -1,3 +1,7 @@
+# RADAR — Startup Intelligence · V2.1 (Windows Desktop)
+
+**Versão aplicativo Windows:** consulte [README_WINDOWS.md](README_WINDOWS.md). O código original do painel local e dos coletores continua disponível.
+
 # RADAR — Startup Intelligence · V2.0
 
 Ferramenta local para **monitorar tendências de tecnologia, startups e Big Techs e transformar sinais públicos em hipóteses de novos negócios**. Evolução do `radar.zip` original: preserva a coleta Python/SQLite, acrescenta identificação heurística de pedidos/dificuldades, temas de oportunidade configuráveis, dashboard, anotações, exportação e monitoramento temporal.

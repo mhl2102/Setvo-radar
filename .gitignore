@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 .venv/
 radar_demo.db
+# Desktop build
+build/
+dist/
+release/
+*.spec
+*.exe
+*.zip

@@ -159,8 +159,9 @@ def save_note(data, cfg):
 
 def _collect_task():
     try:
-        process = subprocess.run([sys.executable, os.path.join(HERE, 'radar.py'), 'collect'],
-                                 cwd=HERE, capture_output=True, text=True, timeout=240, check=False,
+        command = ([sys.executable, '--collect'] if getattr(sys, 'frozen', False)
+                   else [sys.executable, os.path.join(HERE, 'radar.py'), 'collect'])
+        process = subprocess.run(command, cwd=HERE, capture_output=True, text=True, timeout=240, check=False,
                                  env=os.environ.copy())
         with STATE_LOCK:
             COLLECTION_STATE['status'] = 'Concluída' if process.returncode == 0 else 'Erro na execução'

@@ -28,7 +28,14 @@ import requests
 import yaml
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(HERE, "radar.db")
+# SQLite e configurações de usuário NÃO ficam dentro do executável empacotado.
+if getattr(__import__('sys'), 'frozen', False):
+    _base = os.environ.get('LOCALAPPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Local')
+    USER_DATA_DIR = os.path.join(_base, 'RadarStartupIntelligence')
+    os.makedirs(USER_DATA_DIR, exist_ok=True)
+else:
+    USER_DATA_DIR = HERE
+DB_PATH = os.path.join(USER_DATA_DIR, 'radar.db')
 UA = "Mozilla/5.0 (compatible; MarketRadar/0.1; personal research)"
 HTTP = requests.Session()
 HTTP.headers.update({"User-Agent": UA})
@@ -36,7 +43,7 @@ HTTP.headers.update({"User-Agent": UA})
 
 # ------------------------------------------------------------------ util
 def load_env():
-    path = os.path.join(HERE, ".env")
+    path = os.path.join(USER_DATA_DIR, ".env")
     if os.path.exists(path):
         for line in open(path, encoding="utf-8"):
             line = line.strip()
@@ -46,7 +53,10 @@ def load_env():
 
 
 def load_config():
-    with open(os.path.join(HERE, "config.yaml"), encoding="utf-8") as f:
+    # Permite configurar fontes fora do executável em %LOCALAPPDATA%.
+    user_config = os.path.join(USER_DATA_DIR, 'config.yaml')
+    default_config = os.path.join(HERE, 'config.yaml')
+    with open(user_config if os.path.isfile(user_config) else default_config, encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 

@@ -1,0 +1,57 @@
+name: Radar Windows - testes e instalador
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'web/**'
+      - 'config.yaml'
+      - 'requirements*.txt'
+      - 'installer/**'
+      - '.github/workflows/windows-desktop.yml'
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-desktop.txt
+      - name: Testes automatizados
+        run: python -m unittest discover -s tests -v
+      - name: Gerar executável portátil Windows
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed --name RadarStartupIntelligence --collect-all webview --add-data "web;web" --add-data "config.yaml;." desktop.py
+      - name: Homologação do executável sem interface
+        run: |
+          $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP 'RadarDesktopSmoke'
+          & ".\dist\RadarStartupIntelligence\RadarStartupIntelligence.exe" --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Smoke test falhou ($LASTEXITCODE)" }
+      - name: Montar ZIP portátil
+        run: Compress-Archive -Path 'dist/RadarStartupIntelligence' -DestinationPath 'RadarStartupIntelligence-Portable.zip' -Force
+      - name: Instalar compilador do instalador (Inno Setup)
+        run: choco install innosetup --yes --no-progress
+      - name: Gerar instalador Windows
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" 'installer\Radar.iss'
+          if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
+      - name: Publicar artefatos executáveis
+        uses: actions/upload-artifact@v4
+        with:
+          name: Radar-Startup-Intelligence-Windows
+          path: |
+            RadarStartupIntelligence-Portable.zip
+            release/*.exe
+          if-no-files-found: error
+          retention-days: 14
