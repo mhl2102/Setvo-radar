@@ -1,13 +1,14 @@
-# Setvo — Inteligência de Mercado (Windows 2.2)
+# Setvo — Inteligência de Mercado (Windows 2.3.1)
 
 O Setvo é um aplicativo **Windows 10/11 (64 bits)**, com janela própria, sem precisar abrir o navegador. O programa usa `pywebview` com **Microsoft Edge WebView2** e mantém o motor de inteligência e coleta Python da versão web local.
 
 ## Para utilizar
 
-1. No GitHub, abra **Actions → Setvo Windows - testes e instalador** e baixe o artefato de uma execução aprovada.
-2. Extraia o ZIP do artefato. Execute `Setvo-Setup-2.2.0.exe` para instalar, **ou** extraia `Setvo-Portable.zip` para executar sem instalador.
-3. Abra **Setvo** no menu Iniciar ou pela área de trabalho. Clique em **Atualizar dados** para coletar fontes públicas; é necessária conexão com a internet.
-4. Para avaliar com exemplos explicitamente fictícios, a versão de desenvolvimento permite `python desktop.py --demo`; no executável também é possível usar `Setvo.exe --demo`.
+1. No GitHub, abra **Actions → Setvo Windows - testes e instalador** e escolha uma execução aprovada.
+2. **Recomendado:** baixe somente o artefato **SETVO-INSTALADOR-PREVIEW-NAO-ASSINADO**. O GitHub fornece um ZIP: clique com botão direito → **Extrair Tudo**. Na pasta extraída, execute **`Setvo-Setup-2.3.1.exe`**.
+3. **Alternativa portátil:** baixe somente **SETVO-PORTATIL-EXTRAIR-TUDO**, clique com botão direito no ZIP → **Extrair Tudo**. Na pasta extraída, execute **`Setvo.exe`**, mantendo a pasta **`_internal`** no mesmo local. **Não execute o Setvo dentro da visualização ZIP do Explorador**.
+4. Abra **Setvo** no menu Iniciar ou pela área de trabalho (versão instalada). Clique em **Atualizar dados** para coletar fontes públicas; é necessária conexão com a internet.
+5. Para avaliar com exemplos fictícios, use `python desktop.py --demo` no código-fonte ou `Setvo.exe --demo` no executável.
 
 Esta versão substitui o **conceito** do Setvo assistente Windows: agora é dedicada à pesquisa de tendências, problemas e oportunidades de startups. Não contém comandos de voz ou automação do computador.
 
@@ -38,3 +39,7 @@ Para construir o instalador, **o build precisa rodar no Windows**. O workflow `.
 ## Aviso de download perigoso / SmartScreen
 
 O instalador gerado automaticamente no modo normal e **PREVIEW NAO ASSINADA**. Isso pode causar alertas do Edge, Chrome ou SmartScreen, mesmo sem deteccao de malware. Nao desative antivirus nem SmartScreen para instalar. Consulte [SECURITY_DOWNLOADS.md](SECURITY_DOWNLOADS.md) para verificar origem, hashes SHA-256, estado da assinatura e procedimento de assinatura do publicador. Quando existir identidade verificada e conta de Microsoft Artifact Signing configurada, um build manual permite `assinar=true`; a assinatura nao garante reputacao imediata. Se o antivirus identificar uma ameaca especifica, nao execute o arquivo ate investigar.
+
+## Erro: Failed to load Python DLL / python312.dll
+
+Esse erro pode surgir quando o Windows tenta abrir `Setvo.exe` diretamente de um ZIP, sem extrair a pasta `_internal`. **Corrigimos a distribuicao:** o instalador e a versao portatil estao em **artefatos separados**; o portatil nao contem um segundo ZIP interno. O workflow verifica a presença da DLL e testa o executavel depois de uma extracao simulada. Se ainda ocorrer erro numa pasta normalmente extraida, confira quarentena de antivirus, arquivos ausentes e componentes Windows necessarios; nao desligue a protecao do computador.

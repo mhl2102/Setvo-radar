@@ -70,8 +70,33 @@ jobs:
           $exe = Join-Path $PWD 'dist\Setvo\Setvo.exe'
           $process = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -ne 0) { throw "Smoke test falhou ($($process.ExitCode))" }
-      - name: Montar ZIP portátil
-        run: Compress-Archive -Path 'dist/Setvo' -DestinationPath 'Setvo-Portable.zip' -Force
+      - name: Verificar bibliotecas essenciais e orientar uso portatil
+        run: |
+          $app = Join-Path $PWD 'dist\Setvo'
+          foreach ($file in @('Setvo.exe', '_internal\python312.dll')) {
+            $item = Join-Path $app $file
+            if (-not (Test-Path $item -PathType Leaf)) { throw "Arquivo essencial ausente: $file" }
+          }
+          @(
+            'SETVO - VERSAO PORTATIL WINDOWS'
+            ''
+            '1. Clique com o botao direito no ZIP baixado do GitHub e selecione EXTRair TUDO.'
+            '2. Abra a pasta extraida, onde estao Setvo.exe e _internal.'
+            '3. Execute Setvo.exe. Nao abra o programa visualizando o ZIP no Explorador.'
+            '4. Nao mova Setvo.exe isoladamente: ele depende da pasta _internal.'
+            ''
+            'Se apareceu Failed to load Python DLL python312.dll, extraia o arquivo novamente.'
+            'Alternativa recomendada: baixe o artefato SETVO-INSTALADOR no GitHub.'
+          ) | Set-Content (Join-Path $app 'LEIA_PRIMEIRO.txt') -Encoding utf8
+      - name: Simular extracao ZIP e testar app em outra pasta
+        run: |
+          $pacote = Join-Path $env:RUNNER_TEMP 'teste-portatil.zip'
+          $pasta = Join-Path $env:RUNNER_TEMP 'Setvo Extraido'
+          Compress-Archive -Path 'dist\Setvo\*' -DestinationPath $pacote -Force
+          Expand-Archive -Path $pacote -DestinationPath $pasta -Force
+          if (-not (Test-Path (Join-Path $pasta '_internal\python312.dll'))) { throw 'python312.dll ausente apos a extracao' }
+          $p = Start-Process -FilePath (Join-Path $pasta 'Setvo.exe') -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Falhou o teste apos extracao: $($p.ExitCode)" }
       - name: Instalar compilador do instalador (Inno Setup)
         run: choco install innosetup --yes --no-progress
       - name: Gerar instalador Windows
@@ -112,7 +137,7 @@ jobs:
           Write-Host $report
       - name: Gerar hashes SHA-256 e status da assinatura
         run: |
-          $arquivos = @((Get-Item 'Setvo-Portable.zip')) + @(Get-ChildItem 'release' -Filter '*.exe')
+          $arquivos = @((Get-Item 'dist\Setvo\Setvo.exe')) + @(Get-ChildItem 'release' -Filter '*.exe')
           if ($arquivos.Count -lt 2) { throw 'Arquivos para verificacao nao encontrados' }
           $hashes = foreach ($arquivo in $arquivos) {
             $hash = (Get-FileHash -Algorithm SHA256 -Path $arquivo.FullName).Hash.ToLowerInvariant()
@@ -127,15 +152,21 @@ jobs:
           }
           Get-Content 'SHA256SUMS.txt'
           Get-Content 'ASSINATURA_STATUS.txt'
-      - name: Publicar artefatos executáveis
+      - name: Publicar instalador Windows (recomendado)
         uses: actions/upload-artifact@v4
         with:
-          name: Setvo-Windows-${{ inputs.assinar && 'ASSINADO' || 'PREVIEW-NAO-ASSINADO' }}
+          name: SETVO-INSTALADOR-${{ inputs.assinar && 'ASSINADO' || 'PREVIEW-NAO-ASSINADO' }}
           path: |
-            Setvo-Portable.zip
             release/*.exe
             SHA256SUMS.txt
             ASSINATURA_STATUS.txt
             ANTIVIRUS_SCAN.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publicar portatil Windows (somente um ZIP, sem ZIP dentro de ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SETVO-PORTATIL-EXTRAIR-TUDO
+          path: dist/Setvo/
           if-no-files-found: error
           retention-days: 14

@@ -1,6 +1,6 @@
 #define SetvoName "Setvo"
 #define SetvoExe "Setvo.exe"
-#define SetvoVersion "2.2.0"
+#define SetvoVersion "2.3.1"
 [Setup]
 AppId={{9E9210B9-FB9A-4D3B-B637-5DDFE3FA0A3E}
 AppName={#SetvoName}

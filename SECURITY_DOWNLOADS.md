@@ -14,8 +14,8 @@
 ## Como verificar um download
 
 1. Baixe da pagina de execucao aprovada em [Actions do repositorio](https://github.com/mhl2102/Setvo-radar/actions/workflows/windows-desktop.yml), nunca de reuploads desconhecidos.
-2. Dentro do ZIP de artefatos, encontre `SHA256SUMS.txt` e o instalador.
-3. Abra PowerShell na pasta do instalador e execute `Get-FileHash .\Setvo-Setup-2.2.0.exe -Algorithm SHA256` (adapte o nome se mudar). Compare o resultado com `SHA256SUMS.txt`. Isso detecta adulteracao **em relacao ao manifesto**, mas nao comprova ausencia de malware.
+2. Baixe o artefato **SETVO-INSTALADOR-PREVIEW-NAO-ASSINADO**; ele contem o instalador sem outro ZIP interno. Extraia o ZIP antes de executar. Dentro do artefato, encontre `SHA256SUMS.txt` e o instalador.
+3. Abra PowerShell na pasta do instalador e execute `Get-FileHash .\Setvo-Setup-2.3.1.exe -Algorithm SHA256` (adapte o nome se mudar). Compare o resultado com `SHA256SUMS.txt`. Isso detecta adulteracao **em relacao ao manifesto**, mas nao comprova ausencia de malware.
 4. Consulte `ASSINATURA_STATUS.txt`. Uma preview sem assinatura continua sujeita a avisos; **nao ignore uma deteccao de malware**.
 5. Se o arquivo for bloqueado como malicioso, registre a mensagem/ID da deteccao e encaminhe o arquivo para analise de seguranca; nao reduza as protecoes do Windows.
 
@@ -40,3 +40,7 @@ Referencias:
 - https://learn.microsoft.com/pt-br/windows/apps/package-and-deploy/smartscreen-reputation
 - https://learn.microsoft.com/pt-br/azure/artifact-signing/quickstart
 - https://github.com/Azure/artifact-signing-action
+
+## Evitar erro python312.dll
+
+Os downloads sao publicados em dois artefatos distintos: **SETVO-INSTALADOR** (recomendado) e **SETVO-PORTATIL-EXTRAIR-TUDO**. Ambos chegam em um unico ZIP disponibilizado pelo GitHub. Extraia o ZIP inteiro antes de executar. No portatil, mantenha `Setvo.exe` e `_internal/python312.dll` juntos na pasta extraida. O processo de compilacao valida a DLL e simula a extracao antes de publicar. O erro pode ter outras causas (quarentena do antivirus, arquivos corrompidos, dependencias do Windows); nao ignore alertas de malware.
