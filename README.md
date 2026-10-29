@@ -1,8 +1,10 @@
-# RADAR — Startup Intelligence · V2.1 (Windows Desktop)
+# Setvo — Inteligência de Mercado · V2.2 (Windows Desktop)
+
+O **Setvo** agora é um app Windows para descoberta de tendências tecnológicas, identificação de problemas reais e validação de oportunidades de startups. Substitui a proposta do antigo Setvo de controle do PC; o antigo código não integra este app.
 
 **Versão aplicativo Windows:** consulte [README_WINDOWS.md](README_WINDOWS.md). O código original do painel local e dos coletores continua disponível.
 
-# RADAR — Startup Intelligence · V2.0
+# Histórico técnico: Radar Startup Intelligence · V2.0
 
 Ferramenta local para **monitorar tendências de tecnologia, startups e Big Techs e transformar sinais públicos em hipóteses de novos negócios**. Evolução do `radar.zip` original: preserva a coleta Python/SQLite, acrescenta identificação heurística de pedidos/dificuldades, temas de oportunidade configuráveis, dashboard, anotações, exportação e monitoramento temporal.
 

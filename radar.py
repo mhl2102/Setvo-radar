@@ -31,7 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # SQLite e configurações de usuário NÃO ficam dentro do executável empacotado.
 if getattr(__import__('sys'), 'frozen', False):
     _base = os.environ.get('LOCALAPPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Local')
-    USER_DATA_DIR = os.path.join(_base, 'RadarStartupIntelligence')
+    USER_DATA_DIR = os.environ.get('SETVO_USER_DATA_DIR') or os.path.join(_base, 'SetvoIntelligence')
     os.makedirs(USER_DATA_DIR, exist_ok=True)
 else:
     USER_DATA_DIR = HERE

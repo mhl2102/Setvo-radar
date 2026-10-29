@@ -1,5 +1,7 @@
 """Regressões críticas do app desktop, sem abrir janela durante os testes."""
 import os
+import sqlite3
+from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -25,6 +27,39 @@ class DesktopTests(unittest.TestCase):
                 self.assertEqual(os.environ['RADAR_DB'], explicit)
                 self.assertEqual(os.environ['RADAR_DEMO'], '0')
 
+
+    def test_setvo_brand_and_storage_are_distinct_from_old_setvo(self):
+        self.assertEqual(desktop.APP_NAME, 'SetvoIntelligence')
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict(os.environ, {'LOCALAPPDATA': folder, 'XDG_DATA_HOME': folder}):
+                self.assertEqual(desktop.data_dir().name, 'SetvoIntelligence')
+
+    def test_migrates_legacy_radar_db_without_deleting_original(self):
+        with tempfile.TemporaryDirectory() as folder:
+            original = Path(folder) / 'RadarStartupIntelligence'
+            original.mkdir()
+            with sqlite3.connect(original / 'radar.db') as db:
+                db.execute('CREATE TABLE evidence (test INTEGER)')
+                db.execute('INSERT INTO evidence VALUES (42)')
+            (original / 'config.yaml').write_text('feeds: []', encoding='utf-8')
+            current = Path(folder) / 'SetvoIntelligence'
+            current.mkdir()
+            desktop.migrate_legacy_data(current)
+            with sqlite3.connect(current / 'radar.db') as db:
+                self.assertEqual(db.execute('SELECT test FROM evidence').fetchone()[0], 42)
+            self.assertEqual((current / 'config.yaml').read_text(encoding='utf-8'), 'feeds: []')
+            self.assertTrue((original / 'radar.db').exists())
+            # A migração nunca sobrescreve dados já modificados no Setvo.
+            with sqlite3.connect(current / 'radar.db') as db:
+                db.execute('UPDATE evidence SET test=43')
+            desktop.migrate_legacy_data(current)
+            with sqlite3.connect(current / 'radar.db') as db:
+                self.assertEqual(db.execute('SELECT test FROM evidence').fetchone()[0], 43)
+
+    def test_site_brand_matches_setvo(self):
+        html = (Path(desktop.__file__).parent / 'web' / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('<title>Setvo | Inteligência de Mercado</title>', html)
+        self.assertIn('SETVO / V2.2', html)
 
 if __name__ == '__main__':
     unittest.main()

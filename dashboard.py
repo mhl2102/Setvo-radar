@@ -189,7 +189,7 @@ def start_collect():
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'RadarStartups/2.0'
+    server_version = 'SetvoIntelligence/2.2'
 
     def _send(self, data, code=200, content_type='application/json; charset=utf-8', filename=None):
         b = data if isinstance(data, bytes) else (json.dumps(data, ensure_ascii=False).encode('utf-8')
@@ -230,9 +230,9 @@ class Handler(BaseHTTPRequestHandler):
                                   else row.get(key, '')) for key in cols}
                     writer.writerow(safe)
                 self._send(('\ufeff'+stream.getvalue()).encode('utf-8'), content_type='text/csv; charset=utf-8',
-                           filename='radar_sinais.csv')
+                           filename='setvo_sinais.csv')
             elif path == '/api/export.json':
-                self._send(export_rows(params, self.server.config), filename='radar_sinais.json')
+                self._send(export_rows(params, self.server.config), filename='setvo_sinais.json')
             elif path.startswith('/api/'):
                 self._send(fetch_api(path, params, self.server.config))
             else:
@@ -286,7 +286,7 @@ def create_server(port=8765, host='127.0.0.1'):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Interface local do Radar de Startups')
+    parser = argparse.ArgumentParser(description='Setvo — Inteligência de Mercado')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--demo', action='store_true', help='Abre somente exemplos explicitamente fictícios')
     parser.add_argument('--host', default='127.0.0.1', help='Padrão seguro: apenas este computador')
@@ -301,7 +301,7 @@ def main():
         server = create_server(args.port, args.host)
     except OSError as exc:
         raise SystemExit(f'Não foi possível iniciar a porta {args.port}: {exc}')
-    print(f'Radar de Startups disponível em http://{args.host}:{args.port}')
+    print(f'Setvo disponível em http://{args.host}:{args.port}')
     print('Ctrl+C para encerrar. Nenhum dado é enviado pelo dashboard para servidores externos.')
     try:
         server.serve_forever(poll_interval=0.3)

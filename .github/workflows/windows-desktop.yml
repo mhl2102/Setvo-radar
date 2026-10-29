@@ -1,4 +1,4 @@
-name: Radar Windows - testes e instalador
+name: Setvo Windows - testes e instalador
 on:
   workflow_dispatch:
   push:
@@ -32,27 +32,27 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Gerar executável portátil Windows
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --name RadarStartupIntelligence --collect-all webview --add-data "web;web" --add-data "config.yaml;." desktop.py
+          pyinstaller --noconfirm --clean --onedir --windowed --name Setvo --collect-all webview --add-data "web;web" --add-data "config.yaml;." desktop.py
       - name: Homologação do executável sem interface
         run: |
-          $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP 'RadarDesktopSmoke'
-          $exe = Join-Path $PWD 'dist\RadarStartupIntelligence\RadarStartupIntelligence.exe'
+          $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP 'SetvoDesktopSmoke'
+          $exe = Join-Path $PWD 'dist\Setvo\Setvo.exe'
           $process = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -ne 0) { throw "Smoke test falhou ($($process.ExitCode))" }
       - name: Montar ZIP portátil
-        run: Compress-Archive -Path 'dist/RadarStartupIntelligence' -DestinationPath 'RadarStartupIntelligence-Portable.zip' -Force
+        run: Compress-Archive -Path 'dist/Setvo' -DestinationPath 'Setvo-Portable.zip' -Force
       - name: Instalar compilador do instalador (Inno Setup)
         run: choco install innosetup --yes --no-progress
       - name: Gerar instalador Windows
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" 'installer\Radar.iss'
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" 'installer\Setvo.iss'
           if ($LASTEXITCODE -ne 0) { throw "ISCC falhou ($LASTEXITCODE)" }
       - name: Publicar artefatos executáveis
         uses: actions/upload-artifact@v4
         with:
-          name: Radar-Startup-Intelligence-Windows
+          name: Setvo-Inteligencia-de-Mercado-Windows
           path: |
-            RadarStartupIntelligence-Portable.zip
+            Setvo-Portable.zip
             release/*.exe
           if-no-files-found: error
           retention-days: 14

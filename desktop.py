@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Janela Windows do Radar, com banco local persistente e backend em localhost.
+"""Janela Windows do Setvo, com banco local persistente e backend em localhost.
 
 Modo --self-test: verifica o backend no processo empacotado, sem abrir interface.
 Modo --collect: subprocesso sem GUI utilizado pelo botão Atualizar radar.
@@ -8,11 +8,14 @@ import argparse
 import json
 import os
 import sys
+import shutil
+import sqlite3
 import threading
 from http.client import HTTPConnection
 from pathlib import Path
 
-APP_NAME = 'RadarStartupIntelligence'
+APP_NAME = 'SetvoIntelligence'
+LEGACY_APP_NAME = 'RadarStartupIntelligence'
 
 
 def data_dir():
@@ -24,13 +27,39 @@ def data_dir():
     return Path(base) / APP_NAME
 
 
+def migrate_legacy_data(directory):
+    """Preserva pesquisas Radar 2.1 ao adotar a marca Setvo sem tocar no Setvo antigo."""
+    legacy = directory.parent / LEGACY_APP_NAME
+    if not legacy.is_dir() or legacy == directory:
+        return
+    for filename in ('radar.db', 'radar_demo.db'):
+        source, target = legacy / filename, directory / filename
+        if source.is_file() and not target.exists():
+            # SQLite backup inclui transações do WAL do banco antigo quando acessível.
+            try:
+                with sqlite3.connect(f'file:{source.as_posix()}?mode=ro', uri=True) as src:
+                    with sqlite3.connect(target) as dst:
+                        src.backup(dst)
+            except (OSError, sqlite3.Error) as exc:
+                target.unlink(missing_ok=True)
+                (directory / 'migration-warning.log').write_text(
+                    f'Não foi possível copiar {filename}: {exc}\n', encoding='utf-8'
+                )
+    for filename in ('config.yaml', '.env'):
+        source, target = legacy / filename, directory / filename
+        if source.is_file() and not target.exists():
+            shutil.copy2(source, target)
+
+
 def configure_environment(demo=False):
     directory = data_dir()
     directory.mkdir(parents=True, exist_ok=True)
+    migrate_legacy_data(directory)
+    os.environ['SETVO_USER_DATA_DIR'] = str(directory)
     # Um .exe com --windowed pode não possuir stdout/stderr. Sem isso,
     # até o log HTTP do servidor local pode causar exceções silenciosas.
     if sys.stdout is None or sys.stderr is None:
-        log = open(directory / 'radar-desktop.log', 'a', encoding='utf-8', buffering=1)
+        log = open(directory / 'setvo-desktop.log', 'a', encoding='utf-8', buffering=1)
         if sys.stdout is None:
             sys.stdout = log
         if sys.stderr is None:
@@ -87,7 +116,7 @@ def run_desktop(demo=False):
         import webview  # pywebview é necessário apenas ao abrir a janela
         url = f'http://127.0.0.1:{server.server_port}/'
         webview.create_window(
-            'Radar Startup Intelligence', url=url,
+            'Setvo — Inteligência de Mercado', url=url,
             width=1360, height=860, min_size=(980, 650),
             background_color='#0b121b', confirm_close=True,
         )
@@ -99,7 +128,7 @@ def run_desktop(demo=False):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Radar Startup Intelligence — Windows')
+    parser = argparse.ArgumentParser(description='Setvo — Inteligência de Mercado para Windows')
     parser.add_argument('--demo', action='store_true', help='Exemplos fictícios isolados')
     parser.add_argument('--self-test', action='store_true', help='Teste rápido do executável, sem janela')
     parser.add_argument('--collect', action='store_true', help=argparse.SUPPRESS)
