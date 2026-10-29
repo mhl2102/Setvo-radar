@@ -1,0 +1,194 @@
+# ---------- Fontes RSS: (nome, url, geografia, peso da fonte 1-3) ----------
+feeds:
+  # Global - geral / startups
+  - {name: TechCrunch,       url: "https://techcrunch.com/feed/",                 geo: global, weight: 2}
+  - {name: Rest of World,    url: "https://restofworld.org/feed/",                geo: global, weight: 2}
+  - {name: OpenAI,           url: "https://openai.com/news/rss.xml",              geo: global, weight: 3}
+  - {name: Google DeepMind,  url: "https://deepmind.google/blog/rss.xml",         geo: global, weight: 3}
+  # Global - logística
+  - {name: FreightWaves,     url: "https://www.freightwaves.com/news/feed",       geo: global, weight: 2}
+  - {name: Supply Chain Dive, url: "https://www.supplychaindive.com/feeds/news/", geo: global, weight: 2}
+  # Global - automação / robótica
+  - {name: The Robot Report, url: "https://www.therobotreport.com/feed/",         geo: global, weight: 2}
+  - {name: Hackaday,         url: "https://hackaday.com/blog/feed/",              geo: global, weight: 1}
+  # Brasil
+  - {name: Tecnoblog,        url: "https://tecnoblog.net/feed/",                  geo: brasil, weight: 2}
+  - {name: Startupi,         url: "https://startupi.com.br/feed/",                geo: brasil, weight: 2}
+  - {name: Neofeed,          url: "https://neofeed.com.br/feed/",                 geo: brasil, weight: 3}
+  - {name: Brazil Journal,   url: "https://braziljournal.com/feed/",              geo: brasil, weight: 3}
+  - {name: Canaltech,        url: "https://canaltech.com.br/rss/",                geo: brasil, weight: 1}
+
+# ---------- Subreddits (lidos via RSS) ----------
+reddit:
+  - {name: LocalLLaMA,   geo: global}
+  - {name: startups,     geo: global}
+  - {name: SaaS,         geo: global}
+  - {name: logistics,    geo: global}
+  - {name: supplychain,  geo: global}
+  - {name: robotics,     geo: global}
+  - {name: brdev,        geo: brasil}
+  - {name: empreendedorismo, geo: brasil}
+
+# ---------- Fontes de API ----------
+hackernews: {min_points: 15, hours: 24}
+github:
+  min_stars: 30
+  days: 3
+  spam_words: [cheat, hack, crack, aimbot, wallhack, esp, bypass, keygen, free download, undetected, nsfw, casino, bet]
+arxiv:      {categories: ["cs.AI", "cs.RO", "cs.MA"], max_results: 15}
+
+# ---------- Setores: palavras-chave (minúsculas) ----------
+sectors:
+  IA e agentes:
+    [ai agent, agente de ia, llm, large language model, openai, anthropic, gemini, machine learning, inteligência artificial, rag, fine-tun, mcp]
+  Logística e supply chain:
+    [logística, logistics, supply chain, freight, frete, tms, wms, last mile, última milha, warehouse, armazen, transportadora, roteiriza, cold chain, logtech]
+  Automação, IoT e robótica:
+    [automação, automation, robot, iot, plc, scada, industry 4.0, indústria 4.0, microcontroller, esp32, industrial, edge computing, sensor]
+  Fintech e pagamentos:
+    [fintech, pix, open finance, payment, pagamento, banco central, neobank, crédito, lending, stablecoin, drex]
+  Ferramentas para devs:
+    [developer tool, devtool, open source, open-source, sdk, api, framework, rust, typescript, python, cli, github]
+  Regulação e políticas:
+    [regulação, regulation, lgpd, anpd, projeto de lei, ai act, compliance, anatel, cvm, reforma tributária]
+  Segurança cibernética:
+    [cybersecurity, cyberattack, security vulnerability, data breach, phishing, ransomware, zero trust, cibersegurança, segurança cibernética]
+  Energia e clima:
+    [energy grid, clean energy, power grid, datacenter, data center, renewable energy, energia renovável, infraestrutura elétrica, climate tech]
+  Saúde digital:
+    [healthcare, digital health, healthtech, medtech, hospital, prontuário, clinical workflow, telemedicine]
+  Educação:
+    [edtech, education, educação, aprendizagem, learning platform, ai tutor, personalized learning, educação]
+
+# Sinais de "algo novo" que aumentam a pontuação
+novelty_words: [launch, launches, launched, lança, lançamento, raises, raised, rodada, series a, series b, seed, aquisição, acquires, acquisition, announces, anuncia, introduces, open-sources, beta]
+
+# ---------- Saída ----------
+digest:
+  max_items: 20
+  min_score: 4.0
+  per_source: 3      # no máximo 3 itens da mesma fonte
+  per_sector: 4      # no máximo 4 por setor
+  per_other: 2       # itens fora dos seus setores
+  min_brasil: 5      # cota mínima de itens do Brasil
+
+# ---------- Radar de problemas: sinais de pedido/dor em plataformas públicas ----------
+ask_hn: {enabled: true, hours: 168, max_results: 60}
+github_issues:
+  enabled: true
+  days: 14
+  max_results: 20
+  queries:
+    - 'is:issue is:open label:enhancement comments:>=5'
+    - 'is:issue is:open "feature request" comments:>=3'
+
+# ---------- Temas de oportunidade (HIPÓTESES, não demandas confirmadas) ----------
+themes:
+  agentes-processos:
+    name: Agentes de IA para processos empresariais
+    sector: IA e agentes
+    keywords: [ai agent, agentes de ia, ai agents, agentic, workflow, copilot, automação de processos, process automation, mcp]
+    customer: Equipes de operações, atendimento, backoffice e TI de médias empresas
+    problem: Processos repetitivos, fragmentados e dependentes de intervenção manual
+    mvp: Agente para um fluxo de trabalho específico, com aprovação humana e auditoria
+    validation: Entreviste 10 responsáveis, cronometre o fluxo e teste um piloto pago com 3 empresas
+    business_model: SaaS B2B por fluxo, usuário ou volume executado
+  ia-privada:
+    name: IA privada e governança de dados
+    sector: IA e agentes
+    keywords: [on-prem, on premise, air-gapped, local llm, private ai, data privacy, lgpd, data governance, self-hosted]
+    customer: Empresas reguladas e organizações com dados confidenciais
+    problem: Restrições de privacidade, segurança e dependência de modelos externos
+    mvp: Assistente local conectado a uma base autorizada, com logs e controles de acesso
+    validation: Valide os requisitos com times de segurança e obtenha 2 cartas de intenção
+    business_model: Licença empresarial + implantação e suporte
+  previsao-suprimentos:
+    name: Previsão de demanda e ruptura de estoque
+    sector: Logística e supply chain
+    keywords: [demand forecasting, demand planning, previsao de demanda, previsão de demanda, stockout, ruptura de estoque, inventory planning, replenishment, reposição, s&op]
+    customer: Indústrias, distribuidores e redes de varejo
+    problem: Estoque desequilibrado por previsões imprecisas e colaboração insuficiente
+    mvp: Painel que explica desvios de previsão e sugere reposição usando ERP/planilha
+    validation: Compare erro de previsão e rupturas com a operação de 2 empresas durante 30 dias
+    business_model: SaaS por unidade operada ou volume de SKUs
+  rastreio-logistico:
+    name: Visibilidade de entregas e gestão de exceções
+    sector: Logística e supply chain
+    keywords: [track and trace, rastreabilidade, last mile, última milha, delivery exception, proof of delivery, freight visibility, freight audit, tracking, entrega atrasada]
+    customer: Embarcadores, transportadoras e operadores logísticos
+    problem: Falta de visibilidade de ocorrências, atraso de entrega e comunicação fragmentada
+    mvp: Integração de status de transportadoras com alertas de risco e painel de SLA
+    validation: Meça reducação de chamados e horas de acompanhamento num piloto com embarcador
+    business_model: Cobrança por entrega monitorada ou assinatura mensal
+  robo-industrial:
+    name: Robótica e automação acessível
+    sector: Automação, IoT e robótica
+    keywords: [industrial robot, robotics, robot, cobot, warehouse automation, machine vision, machine safety, sensores industriais, automação industrial]
+    customer: Operações industriais e centros de distribuição de pequeno e médio porte
+    problem: Atividades repetitivas com alto custo ou baixo acesso à automação
+    mvp: Solução de visão computacional ou automação modular para uma etapa operacional
+    validation: Meça produtividade, segurança e payback em célula piloto
+    business_model: Equipamento + serviço de implantação e manutenção
+  antifraude:
+    name: Antifraude e confiança digital
+    sector: Fintech e pagamentos
+    keywords: [fraud, antifraud, fraude, identity verification, kyc, deepfake, synthetic identity, scam, chargeback, lavagem de dinheiro]
+    customer: Fintechs, bancos digitais, e-commerces e marketplaces
+    problem: Fraudes financeiras e perda de confiança em transações e identidade
+    mvp: Detecção de um tipo específico de risco com explicação e revisão humana
+    validation: Compare falsos positivos e perdas evitadas em uma amostra anonimizada
+    business_model: API por verificação ou transação monitorada
+  fintech-pmes:
+    name: Crédito e gestão de caixa para PMEs
+    sector: Fintech e pagamentos
+    keywords: [cash flow, fluxo de caixa, working capital, capital de giro, lending, credit underwriting, credit risk, receivables, contas a receber]
+    customer: Pequenas empresas, distribuidores e prestadores de serviços
+    problem: Previsibilidade financeira limitada e dificuldade de acesso a capital
+    mvp: Conciliação e projeção de caixa usando extratos/ERP com consentimento
+    validation: Teste economia de tempo e disposição de pagar com 15 PMEs
+    business_model: Assinatura ou receita por serviço financeiro regulado
+  devtool-api:
+    name: Integrações e manutenção de APIs
+    sector: Ferramentas para devs
+    keywords: [api breaking change, api integration, sdk, developer tools, devtool, api monitoring, webhook, integration platform, observability]
+    customer: Times de desenvolvimento e plataformas SaaS
+    problem: Quebras de integração, migrações demoradas e falta de observabilidade
+    mvp: Monitor de mudanças de API com sugestão e teste automatizado de migração
+    validation: Teste em projetos open source e meça incidentes/horas evitadas
+    business_model: SaaS por integração monitorada
+  ciberseguranca:
+    name: Segurança e governança de aplicações
+    sector: Segurança cibernética
+    keywords: [cybersecurity, security posture, vulnerability, cyberattack, ransomware, zero trust, segurança cibernética, iam, supply chain attack]
+    customer: Equipes de TI e segurança de médias empresas
+    problem: Superfície de ataque crescente, ferramentas isoladas e resposta lenta
+    mvp: Inventário de exposição e priorização de vulnerabilidades com relatórios acionáveis
+    validation: Compare tempo de detecção e correção com 3 equipes de segurança
+    business_model: SaaS por ativo ou ambiente protegido
+  energia-datacenter:
+    name: Energia e infraestrutura para data centers
+    sector: Energia e clima
+    keywords: [data center, datacenter, power grid, electricity demand, cooling, thermal management, power transformer, liquid cooling, grid infrastructure]
+    customer: Operadores de data centers, utilities e fornecedores de infraestrutura
+    problem: Gargalos de energia, refrigeração e equipamentos para expansão de computação
+    mvp: Diagnóstico de consumo e oportunidades de eficiência de refrigeração
+    validation: Levante custos reais, restrições e ROI com operadores de infraestrutura
+    business_model: Software de otimização + serviço técnico
+  healthtech-fluxo:
+    name: Automação administrativa em saúde
+    sector: Saúde digital
+    keywords: [medical billing, healthcare administration, clinical workflow, hospital workflow, prontuario, prontuário, healthtech, patient scheduling, healthcare paperwork]
+    customer: Clínicas, hospitais e administradores de saúde
+    problem: Tempo gasto em cadastros, autorização e rotinas administrativas
+    mvp: Automação de uma tarefa não clínica com trilha de auditoria
+    validation: Faça piloto monitorado sem decisões clínicas autônomas e avalie horas poupadas
+    business_model: SaaS por clínica ou volume processado
+  educacao-personalizada:
+    name: Aprendizagem e formação profissional personalizada
+    sector: Educação
+    keywords: [edtech, ai tutor, personalized learning, educação personalizada, adaptive learning, tutoring, workforce upskilling, training platform]
+    customer: Escolas, empresas de treinamento e profissionais em requalificação
+    problem: Dificuldade de acompanhamento individual e formação eficiente
+    mvp: Tutor para uma disciplina com avaliação de progresso e supervisão pedagógica
+    validation: Compare engajamento e aprendizagem em grupo piloto com critérios definidos
+    business_model: Assinatura por aluno ou licença B2B

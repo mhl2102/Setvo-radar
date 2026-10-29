@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Radar de sinais, problemas e oportunidades de startups com evidências públicas.">
+  <title>Radar / Startup Intelligence</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">✳</div><div><strong>radar<span class="brand-dot">.</span></strong><small>STARTUP INTELLIGENCE</small></div></div>
+      <div class="workspace-label">WORKSPACE <span>01</span></div>
+      <nav id="nav" class="main-nav" aria-label="Seções">
+        <button class="nav-link active" data-view="overview"><span aria-hidden="true">◈</span> Visão geral</button>
+        <button class="nav-link" data-view="signals"><span aria-hidden="true">⌁</span> Explorar sinais</button>
+        <button class="nav-link" data-view="opportunities"><span aria-hidden="true">✧</span> Oportunidades</button>
+        <button class="nav-link" data-view="trends"><span aria-hidden="true">▥</span> Tendências</button>
+        <button class="nav-link" data-view="bigtech"><span aria-hidden="true">◉</span> Big Techs</button>
+        <button class="nav-link" data-view="projects"><span aria-hidden="true">▣</span> Minha pesquisa</button>
+        <button class="nav-link" data-view="sources"><span aria-hidden="true">⇄</span> Fontes e coleta</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="live-status"><span id="status-dot" class="pulse"></span><span id="sidebar-status">Dados locais</span></div>
+        <p>Inteligência com evidências. Oportunidade não é sinônimo de demanda validada.</p>
+        <span class="version">RADAR / V2.0</span>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>WORKSPACE</span><span class="crumb">/</span><strong id="view-name">Visão geral</strong></div>
+        <div class="topbar-actions"><span id="demo-badge" class="demo-tag hidden">DADOS DE DEMONSTRAÇÃO</span>
+          <label class="period-label" for="period">Período</label><select id="period" aria-label="Período de análise"><option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option><option value="180">180 dias</option></select>
+          <button id="collect-btn" class="btn btn-primary"><span aria-hidden="true">↻</span> Atualizar radar</button></div>
+      </header>
+      <div class="page-wrap">
+        <section id="view-overview" class="view" aria-label="Visão geral">
+          <div class="page-heading"><div class="eyebrow"><span class="eyebrow-dot"></span> INTELIGÊNCIA DE MERCADO / BRASIL + GLOBAL</div><h1>Descubra o que vem <em>depois.</em></h1><p>Transforme movimentos do mercado em problemas investigáveis e hipóteses de startups.</p></div>
+          <div id="overview-kpis" class="kpi-grid" aria-live="polite"><div class="loading-card">Carregando dados…</div></div>
+          <div class="two-col main-panels"><article class="panel"><div class="section-head"><div><h2>Setores em movimento</h2><p>Volume de sinais no período</p></div><button class="text-btn" data-go="trends">Ver tendências ↗</button></div><div id="sector-bars" class="bars"></div></article>
+            <article class="panel"><div class="section-head"><div><h2>De notícia a oportunidade</h2><p>O que os dados permitem concluir</p></div></div>
+              <div class="process-steps"><div><b>01</b><div><strong>Identificar sinais</strong><p>Notícias, pesquisas, discussões e pedidos públicos.</p></div></div><div><b>02</b><div><strong>Encontrar problemas</strong><p>Priorizar relatos e solicitações, não só manchetes.</p></div></div><div><b>03</b><div><strong>Construir hipótese</strong><p>Definir cliente, problema, MVP e teste de valor.</p></div></div><div><b>04</b><div><strong>Validar com clientes</strong><p>Entrevistas, uso real, pilotos e pagamento.</p></div></div></div>
+            </article></div>
+          <div class="section-head spaced"><div><h2>Oportunidades em observação</h2><p>Hipóteses agrupadas por contexto e evidências</p></div><button class="text-btn" data-go="opportunities">Explorar todas ↗</button></div><div id="featured-opportunities" class="feature-grid"></div>
+          <div class="section-head spaced"><div><h2>Últimos sinais</h2><p>Publicações recentes com link para a origem</p></div><button class="text-btn" data-go="signals">Abrir exploração ↗</button></div><div id="recent-signals" class="compact-list"></div>
+        </section>
+        <section id="view-signals" class="view hidden" aria-label="Explorar sinais"><div class="page-heading compact"><div class="eyebrow">EXPLORAÇÃO / EVIDÊNCIAS</div><h1>Explore os <em>sinais.</em></h1><p>Filtre fontes abertas e diferencie dor, pedidos, lançamentos e pesquisa.</p></div>
+          <div class="filter-panel"><div class="search-wrapper"><span aria-hidden="true">⌕</span><input id="signal-search" type="search" placeholder="Buscar tema, problema, empresa ou tecnologia…" aria-label="Buscar sinais"></div>
+            <select id="filter-sector" aria-label="Setor"><option value="todos">Todos os setores</option></select>
+            <select id="filter-signal" aria-label="Tipo de sinal"><option value="todos">Todos os tipos</option><option value="dor">Dor relatada</option><option value="pedido">Pedido</option><option value="indicacao">Dor mencionada em notícia</option><option value="discussao">Discussão</option><option value="lancamento">Lançamento</option><option value="pesquisa">Pesquisa</option><option value="tendencia">Tendência</option></select>
+            <select id="filter-geo" aria-label="Geografia"><option value="todos">Global + Brasil</option><option value="brasil">Brasil</option><option value="global">Global</option></select>
+            <select id="filter-sort" aria-label="Ordenar"><option value="recente">Mais recentes</option><option value="score">Maior relevância</option><option value="engagement">Maior interação</option></select></div>
+          <div class="results-head"><span id="signals-count">— resultados</span><div><button id="export-json" class="btn btn-outline small">Exportar JSON</button><button id="export-csv" class="btn btn-outline small">Exportar CSV</button></div></div><div id="signals-list" class="signal-list"></div><div id="signals-pager" class="pager"></div>
+        </section>
+        <section id="view-opportunities" class="view hidden" aria-label="Oportunidades"><div class="page-heading compact"><div class="eyebrow">IDEAÇÃO / ENCONTRAR O PROBLEMA</div><h1>Onde existe <em>espaço.</em></h1><p>Cada oportunidade é uma hipótese orientada por sinais, com roteiro de validação.</p></div>
+          <div class="notice"><span class="notice-icon">ⓘ</span><div><strong>Como ler as notas</strong><p>O score prioriza volume, relatos diretos, diversidade de fontes e engajamento. Não mede receita potencial, TAM ou intenção real de compra.</p></div></div>
+          <div class="filter-panel short"><div class="search-wrapper"><span>⌕</span><input id="opp-search" type="search" placeholder="Buscar oportunidades…" aria-label="Pesquisar oportunidades"></div><select id="opp-sector" aria-label="Filtrar oportunidades por setor"><option value="todos">Todos os setores</option></select><select id="opp-status" aria-label="Filtrar por estágio"><option value="todos">Todos os estágios</option><option value="novo">Não pesquisadas</option><option value="observando">Observando</option><option value="pesquisando">Pesquisando</option><option value="validando">Validando</option><option value="arquivado">Arquivadas</option></select></div>
+          <div class="results-head"><span id="opp-count">— hipóteses</span><span class="microcopy">Acessar uma hipótese abre suas evidências e plano de teste</span></div><div id="opportunities-list" class="opportunity-grid"></div>
+        </section>
+        <section id="view-trends" class="view hidden" aria-label="Tendências"><div class="page-heading compact"><div class="eyebrow">INTELIGÊNCIA / EVOLUÇÃO TEMPORAL</div><h1>Monitore a <em>mudança.</em></h1><p>Compare a quantidade de publicações dos últimos 7 dias com os 7 dias anteriores.</p></div><div id="trend-disclaimer" class="notice"></div><div class="panel"><div class="section-head"><div><h2>Volume por setor</h2><p>Últimos 7 dias vs. semana anterior</p></div></div><div id="trend-list" class="trend-list"></div></div></section>
+        <section id="view-bigtech" class="view hidden" aria-label="Big Techs"><div class="page-heading compact"><div class="eyebrow">EMPRESAS / MOVIMENTOS ESTRATÉGICOS</div><h1>O que fazem as <em>Big Techs.</em></h1><p>Menções detectadas em publicações coletadas. Menção não significa investimento nem anúncio oficial.</p></div><div id="bigtech-grid" class="company-grid"></div></section>
+        <section id="view-projects" class="view hidden" aria-label="Minha pesquisa"><div class="page-heading compact"><div class="eyebrow">WORKSPACE / TESES EM ACOMPANHAMENTO</div><h1>Suas <em>investigações.</em></h1><p>Hipóteses com anotações e estágios salvos no banco local.</p></div><div id="project-list" class="opportunity-grid"></div></section>
+        <section id="view-sources" class="view hidden" aria-label="Fontes e coleta"><div class="page-heading compact"><div class="eyebrow">TRANSPARÊNCIA / PROVENIÊNCIA</div><h1>Conheça as <em>fontes.</em></h1><p>Os conteúdos vêm de feeds e APIs públicas. Algumas fontes podem apresentar bloqueios ou limites.</p></div>
+          <div class="two-col"><article class="panel"><div class="section-head"><h2>Última coleta</h2></div><div id="collect-info" class="collection-summary"></div><div id="collect-log" class="log-box hidden"></div></article><article class="panel"><div class="section-head"><h2>Limitações de evidência</h2></div><div class="method-list"><p><b>Menções e lançamentos:</b> indicam atenção do mercado, não compradores.</p><p><b>Pedidos e reclamações:</b> indicam potenciais dores, sem representar uma amostra estatística.</p><p><b>Escala:</b> precisa de tamanho de mercado, concorrência e modelo financeiro estudados separadamente.</p><p><b>Validação:</b> entrevistas, problemas quantificados e pilotos pagos continuam obrigatórios.</p></div></article></div>
+          <div class="section-head spaced"><h2>Origens monitoradas</h2></div><div id="sources-grid" class="source-grid"></div><p class="footer-note">Fontes adicionais: Hacker News/Ask HN, busca de repositórios e issues GitHub, arXiv e RSS público de comunidades Reddit (sujeito a restrições).</p></section>
+      </div>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+  <aside id="opp-drawer" class="drawer hidden" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"><div class="drawer-header"><span class="eyebrow">FICHA DE HIPÓTESE</span><button id="close-drawer" class="close-btn" aria-label="Fechar">×</button></div><div id="drawer-body"></div></aside>
+</body>
+</html>
