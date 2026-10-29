@@ -263,6 +263,49 @@ def collect_ask_hn(cfg):
         return []
 
 
+def collect_stackexchange(cfg):
+    """Perguntas recentes via API pública Stack Exchange, respeitando backoff e quotas.
+
+    Perguntas técnicas são SOMENTE sinais de fricção, não demanda comprovada.
+    """
+    cfg_se = cfg.get('stackexchange', {})
+    if not cfg_se.get('enabled', False):
+        return []
+    found = []
+    for site in cfg_se.get('sites', ['stackoverflow', 'superuser'])[:4]:
+        try:
+            response = HTTP.get('https://api.stackexchange.com/2.3/questions',
+                                params={'site': site, 'order': 'desc', 'sort': 'creation',
+                                        'pagesize': min(50, max(1, int(cfg_se.get('per_site', 25))))},
+                                timeout=20)
+            response.raise_for_status()
+            payload = response.json()
+            for q in payload.get('items', []):
+                # Filtragem prudente: muitas dúvidas de programação não são dores de produto.
+                if int(q.get('score') or 0) < int(cfg_se.get('min_score', 1)):
+                    continue
+                title = re.sub(r'&(?:quot|#34);', '"', q.get('title', ''))
+                title = re.sub(r'&amp;', '&', title)
+                found.append(item('Stack Exchange: ' + site, title, q.get('link', ''),
+                                  'Tags: ' + ', '.join(q.get('tags', [])[:8]),
+                                  'global', 1, max(0, int(q.get('score') or 0)) +
+                                  max(0, int(q.get('answer_count') or 0)), 'ask',
+                                  datetime.fromtimestamp(q['creation_date'], tz=timezone.utc)
+                                  if q.get('creation_date') else None))
+            if payload.get('backoff'):
+                print(f'  [stackexchange] servidor pediu backoff ({payload["backoff"]}s); adiando demais fontes')
+                break
+            if int(payload.get('quota_remaining', 1)) < 2:
+                print('  [stackexchange] quota baixa; encerrando coleta desta fonte')
+                break
+        except Exception as exc:
+            print(f'  [stackexchange] falhou {site}: {str(exc)[:70]}')
+            if getattr(getattr(exc, 'response', None), 'status_code', None) in (403, 429):
+                break
+    print(f'  [stackexchange] {len(found)}')
+    return found
+
+
 def collect_github_issues(cfg):
     """Pedidos públicos de funcionalidades; consulta limitada e respeita rate limits."""
     c = cfg.get('github_issues', {})
@@ -497,7 +540,7 @@ def cmd_collect(cfg):
     started = now().isoformat()
     seen = new = 0
     con = db()
-    for fn in (collect_rss, collect_reddit, collect_hn, collect_ask_hn, collect_github, collect_github_issues, collect_arxiv):
+    for fn in (collect_rss, collect_reddit, collect_hn, collect_ask_hn, collect_github, collect_github_issues, collect_stackexchange, collect_arxiv):
         batch = fn(cfg)
         seen += len(batch)
         new += save(con, batch, cfg)  # persistência incremental: falhas posteriores não perdem o progresso

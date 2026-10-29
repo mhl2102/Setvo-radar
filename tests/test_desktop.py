@@ -60,7 +60,7 @@ class DesktopTests(unittest.TestCase):
     def test_site_brand_matches_setvo(self):
         html = (Path(desktop.__file__).parent / 'web' / 'index.html').read_text(encoding='utf-8')
         self.assertIn('<title>Setvo | Inteligência de Mercado</title>', html)
-        self.assertIn('SETVO / V2.2', html)
+        self.assertIn('SETVO / V2.3', html)
 
 if __name__ == '__main__':
     unittest.main()

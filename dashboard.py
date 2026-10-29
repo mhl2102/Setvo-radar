@@ -20,6 +20,7 @@ from urllib.parse import parse_qs, urlparse
 
 from radar import HERE, db, load_config, load_env
 from insights import COMPANIES, build_opportunities, mentioned_companies, summarize_sector_trends
+from garimpo import find_gold
 
 STATE_LOCK = threading.Lock()
 COLLECTION_STATE = {'running': False, 'started_at': None, 'completed_at': None, 'status': 'Nunca iniciada nesta sessão', 'log': ''}
@@ -115,6 +116,14 @@ def fetch_api(route, params, cfg):
             page, size = 1, 18
         return {'total': len(filtered), 'page': page, 'pages': max(1, (len(filtered)+size-1)//size),
                 'items': filtered[(page-1)*size:page*size], 'demo': demo}
+    if route == '/api/gold':
+        findings = find_gold(rows, cfg['themes'], _days(params))
+        minimum = max(0, min(20, int(params.get('min_direct', ['2'])[0]) if params.get('min_direct', ['2'])[0].isdigit() else 2))
+        origin = params.get('origin', ['todos'])[0]
+        findings = [r for r in findings if r['direct'] >= minimum and (origin == 'todos' or r['origin'] == origin)]
+        return {'findings': findings[:80], 'total': len(findings), 'demo': demo,
+                'method': 'Triagem heurística baseada em sinais públicos, com rastreabilidade por URL. Não mede TAM, concorrência real ou chance de sucesso.',
+                'coverage_warning': 'Ausência de menções ou notícias na amostra não significa ausência de soluções, concorrentes ou investimento.'}
     if route == '/api/opportunities':
         all_ops = build_opportunities(rows, cfg['themes'], _days(params), states)
         sector = params.get('sector', ['todos'])[0]
@@ -189,7 +198,7 @@ def start_collect():
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'SetvoIntelligence/2.2'
+    server_version = 'SetvoIntelligence/2.3'
 
     def _send(self, data, code=200, content_type='application/json; charset=utf-8', filename=None):
         b = data if isinstance(data, bytes) else (json.dumps(data, ensure_ascii=False).encode('utf-8')

@@ -82,6 +82,14 @@ github_issues:
     - 'is:issue is:open label:enhancement comments:>=5'
     - 'is:issue is:open "feature request" comments:>=3'
 
+# Stack Exchange: perguntas técnicas recentes, não intenção de compra.
+# Backoff e cotas respeitados pelo coletor; podem limitar a cobertura.
+stackexchange:
+  enabled: true
+  sites: [stackoverflow, superuser, serverfault]
+  per_site: 25
+  min_score: 1
+
 # ---------- Temas de oportunidade (HIPÓTESES, não demandas confirmadas) ----------
 themes:
   agentes-processos:

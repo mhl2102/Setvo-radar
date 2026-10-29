@@ -18,6 +18,7 @@
         <button class="nav-link active" data-view="overview"><span aria-hidden="true">◈</span> Visão geral</button>
         <button class="nav-link" data-view="signals"><span aria-hidden="true">⌁</span> Explorar sinais</button>
         <button class="nav-link" data-view="opportunities"><span aria-hidden="true">✧</span> Oportunidades</button>
+        <button class="nav-link" data-view="garimpo"><span aria-hidden="true">◇</span> Garimpo de ouro</button>
         <button class="nav-link" data-view="trends"><span aria-hidden="true">▥</span> Tendências</button>
         <button class="nav-link" data-view="bigtech"><span aria-hidden="true">◉</span> Big Techs</button>
         <button class="nav-link" data-view="projects"><span aria-hidden="true">▣</span> Minha pesquisa</button>
@@ -25,7 +26,7 @@
       </nav>
       <div class="sidebar-bottom"><div class="live-status"><span id="status-dot" class="pulse"></span><span id="sidebar-status">Dados locais</span></div>
         <p>Inteligência com evidências. Oportunidade não é sinônimo de demanda validada.</p>
-        <span class="version">SETVO / V2.2</span>
+        <span class="version">SETVO / V2.3</span>
       </div>
     </aside>
     <main class="main">
@@ -59,12 +60,20 @@
           <div class="filter-panel short"><div class="search-wrapper"><span>⌕</span><input id="opp-search" type="search" placeholder="Buscar oportunidades…" aria-label="Pesquisar oportunidades"></div><select id="opp-sector" aria-label="Filtrar oportunidades por setor"><option value="todos">Todos os setores</option></select><select id="opp-status" aria-label="Filtrar por estágio"><option value="todos">Todos os estágios</option><option value="novo">Não pesquisadas</option><option value="observando">Observando</option><option value="pesquisando">Pesquisando</option><option value="validando">Validando</option><option value="arquivado">Arquivadas</option></select></div>
           <div class="results-head"><span id="opp-count">— hipóteses</span><span class="microcopy">Acessar uma hipótese abre suas evidências e plano de teste</span></div><div id="opportunities-list" class="opportunity-grid"></div>
         </section>
+        <section id="view-garimpo" class="view hidden" aria-label="Garimpo de oportunidades">
+          <div class="page-heading compact"><div class="eyebrow">SETVO AGENTE / GARIMPO DE DEMANDAS</div><h1>Encontre o <em>ouro escondido.</em></h1><p>Problemas relatados que aparecem em fontes diferentes — inclusive temas descobertos sem cadastro prévio. Resultados são hipóteses para investigar, não mercados comprovadamente desatendidos.</p></div>
+          <div class="notice"><span class="notice-icon">ⓘ</span><div><strong>O que significa “pouca atenção”?</strong><p>Usamos somente a proporção entre relatos/pedidos e notícias ou lançamentos presentes na nossa amostra. Não sabemos quantos concorrentes existem fora das fontes monitoradas. Cada resultado mostra a evidência e a incerteza.</p></div></div>
+          <div class="filter-panel short"><div><label for="gold-direct" class="form-label">Relatos mínimos</label><select id="gold-direct"><option value="2" selected>2 ou mais (recomendado)</option><option value="1">1 ou mais (exploratório)</option><option value="4">4 ou mais</option></select></div><div><label for="gold-origin" class="form-label">Origem da hipótese</label><select id="gold-origin"><option value="todos">Todas</option><option value="emergente">Descoberta automaticamente</option><option value="tema monitorado">Temas já monitorados</option></select></div></div>
+          <div class="results-head"><span id="gold-count">— oportunidades</span><span class="microcopy">Nota de triagem, não probabilidade de sucesso</span></div>
+          <div id="gold-list" class="opportunity-grid"></div>
+          <p class="footer-note">O Setvo não afirma que um mercado está livre de concorrência. Investigue o contexto, soluções existentes e disposição para pagar antes de investir.</p>
+        </section>
         <section id="view-trends" class="view hidden" aria-label="Tendências"><div class="page-heading compact"><div class="eyebrow">INTELIGÊNCIA / EVOLUÇÃO TEMPORAL</div><h1>Monitore a <em>mudança.</em></h1><p>Compare a quantidade de publicações dos últimos 7 dias com os 7 dias anteriores.</p></div><div id="trend-disclaimer" class="notice"></div><div class="panel"><div class="section-head"><div><h2>Volume por setor</h2><p>Últimos 7 dias vs. semana anterior</p></div></div><div id="trend-list" class="trend-list"></div></div></section>
         <section id="view-bigtech" class="view hidden" aria-label="Big Techs"><div class="page-heading compact"><div class="eyebrow">EMPRESAS / MOVIMENTOS ESTRATÉGICOS</div><h1>O que fazem as <em>Big Techs.</em></h1><p>Menções detectadas em publicações coletadas. Menção não significa investimento nem anúncio oficial.</p></div><div id="bigtech-grid" class="company-grid"></div></section>
         <section id="view-projects" class="view hidden" aria-label="Minha pesquisa"><div class="page-heading compact"><div class="eyebrow">WORKSPACE / TESES EM ACOMPANHAMENTO</div><h1>Suas <em>investigações.</em></h1><p>Hipóteses com anotações e estágios salvos no banco local.</p></div><div id="project-list" class="opportunity-grid"></div></section>
         <section id="view-sources" class="view hidden" aria-label="Fontes e coleta"><div class="page-heading compact"><div class="eyebrow">TRANSPARÊNCIA / PROVENIÊNCIA</div><h1>Conheça as <em>fontes.</em></h1><p>Os conteúdos vêm de feeds e APIs públicas. Algumas fontes podem apresentar bloqueios ou limites.</p></div>
           <div class="two-col"><article class="panel"><div class="section-head"><h2>Última coleta</h2></div><div id="collect-info" class="collection-summary"></div><div id="collect-log" class="log-box hidden"></div></article><article class="panel"><div class="section-head"><h2>Limitações de evidência</h2></div><div class="method-list"><p><b>Menções e lançamentos:</b> indicam atenção do mercado, não compradores.</p><p><b>Pedidos e reclamações:</b> indicam potenciais dores, sem representar uma amostra estatística.</p><p><b>Escala:</b> precisa de tamanho de mercado, concorrência e modelo financeiro estudados separadamente.</p><p><b>Validação:</b> entrevistas, problemas quantificados e pilotos pagos continuam obrigatórios.</p></div></article></div>
-          <div class="section-head spaced"><h2>Origens monitoradas</h2></div><div id="sources-grid" class="source-grid"></div><p class="footer-note">Fontes adicionais: Hacker News/Ask HN, busca de repositórios e issues GitHub, arXiv e RSS público de comunidades Reddit (sujeito a restrições).</p></section>
+          <div class="section-head spaced"><h2>Origens monitoradas</h2></div><div id="sources-grid" class="source-grid"></div><p class="footer-note">Fontes adicionais: Hacker News/Ask HN, busca de repositórios e issues GitHub, arXiv e RSS público de comunidades Reddit (sujeito a restrições), Stack Exchange (limites e backoff).</p></section>
       </div>
     </main>
   </div>
