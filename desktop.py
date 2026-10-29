@@ -27,6 +27,14 @@ def data_dir():
 def configure_environment(demo=False):
     directory = data_dir()
     directory.mkdir(parents=True, exist_ok=True)
+    # Um .exe com --windowed pode não possuir stdout/stderr. Sem isso,
+    # até o log HTTP do servidor local pode causar exceções silenciosas.
+    if sys.stdout is None or sys.stderr is None:
+        log = open(directory / 'radar-desktop.log', 'a', encoding='utf-8', buffering=1)
+        if sys.stdout is None:
+            sys.stdout = log
+        if sys.stderr is None:
+            sys.stderr = log
     if demo:
         # Nunca permitir que --demo escreva no banco real, mesmo com RADAR_DB definido.
         os.environ['RADAR_DB'] = str(directory / 'radar_demo.db')
