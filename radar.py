@@ -173,19 +173,27 @@ def feed_date(entry):
 
 
 # ------------------------------------------------------------------ coletores
-def collect_rss(cfg):
+def collect_rss(cfg, record=None):
+    """Coleta os feeds RSS. `record(source, ok, count, error)` é chamado por feed,
+    permitindo monitorar cada fonte individualmente (ex.: 'rss:TechCrunch')."""
     out = []
     for f in cfg["feeds"]:
+        source = f"rss:{f['name']}"
         try:
             r = HTTP.get(f["url"], timeout=20)
             r.raise_for_status()
             feed = feedparser.parse(r.content)
-            for e in feed.entries[:25]:
+            entries = feed.entries[:25]
+            for e in entries:
                 out.append(item(f["name"], e.get("title", ""), e.get("link", ""),
                                 e.get("summary", ""), f["geo"], f["weight"], 0, "news", feed_date(e)))
-            print(f"  [rss] {f['name']}: {len(feed.entries[:25])}")
+            print(f"  [rss] {f['name']}: {len(entries)}")
+            if record:
+                record(source, True, len(entries), "")
         except Exception as ex:
             print(f"  [rss] FALHOU {f['name']}: {str(ex)[:80]}")
+            if record:
+                record(source, False, 0, f"{type(ex).__name__}: {ex}")
     return out
 
 
@@ -535,20 +543,69 @@ def send_telegram(text):
 
 
 # ------------------------------------------------------------------ comandos
+COLLECTORS = (collect_rss, collect_reddit, collect_hn, collect_ask_hn, collect_github,
+              collect_github_issues, collect_stackexchange, collect_arxiv)
+
+
 def cmd_collect(cfg):
+    """Executa uma coleta completa.
+
+    - Usa trava no banco: duas coletas (manual, agendada ou do painel) nunca rodam ao mesmo tempo.
+    - Cada coletor é isolado: a falha de um não interrompe os demais e fica registrada em source_status.
+    - Grava o progresso por coletor, então uma interrupção não perde os itens já obtidos.
+    """
+    import agenda
     print("Coletando...")
-    started = now().isoformat()
+    started = now()
     seen = new = 0
     con = db()
-    for fn in (collect_rss, collect_reddit, collect_hn, collect_ask_hn, collect_github, collect_github_issues, collect_stackexchange, collect_arxiv):
-        batch = fn(cfg)
-        seen += len(batch)
-        new += save(con, batch, cfg)  # persistência incremental: falhas posteriores não perdem o progresso
-    con.execute("INSERT INTO collection_runs (started, finished, seen, added, status, details) VALUES (?, ?, ?, ?, ?, ?)",
-                (started, now().isoformat(), seen, new, 'concluido', 'Coleta concluída; confira alertas de cada fonte no terminal.'))
-    con.commit()
-    con.close()
-    print(f"Itens vistos: {seen} | novos gravados: {new}")
+    owner = f"pid-{os.getpid()}"
+    try:
+        if not agenda.acquire_lock(con, owner):
+            print("Coleta ignorada: já existe uma coleta em andamento.")
+            return False
+        failures = 0
+        for fn in COLLECTORS:
+            name = fn.__name__
+            try:
+                if fn is collect_rss:
+                    batch = fn(cfg, record=lambda s, ok, c, err: agenda.record_source(
+                        con, s, ok=ok, count=c, error=err, now=now()))
+                else:
+                    batch = fn(cfg)
+                count = save(con, batch, cfg)  # persistência incremental por coletor
+                seen += len(batch)
+                new += count
+                agenda.record_source(con, name, ok=True, count=len(batch), now=now())
+            except Exception as ex:
+                failures += 1
+                agenda.record_source(con, name, ok=False, error=f"{type(ex).__name__}: {ex}", now=now())
+                print(f"  [{name}] FALHOU: {str(ex)[:120]}")
+        status = 'concluido' if failures == 0 else 'concluido com falhas'
+        con.execute("INSERT INTO collection_runs (started, finished, seen, added, status, details) VALUES (?, ?, ?, ?, ?, ?)",
+                    (started.isoformat(), now().isoformat(), seen, new, status,
+                     f'{len(COLLECTORS) - failures}/{len(COLLECTORS)} coletores ok; confira source_status.'))
+        con.commit()
+        agenda.mark_run(con, now=now())
+        print(f"Itens vistos: {seen} | novos gravados: {new} | coletores com falha: {failures}")
+        return True
+    finally:
+        agenda.release_lock(con, owner)
+        con.close()
+
+
+def cmd_due(cfg):
+    """Para o Agendador de Tarefas do Windows: coleta somente se a agenda estiver ativa e vencida."""
+    import agenda
+    con = db()
+    try:
+        due = agenda.is_due(con, now=now())
+    finally:
+        con.close()
+    if not due:
+        print("Nenhuma coleta vencida ou agenda pausada.")
+        return False
+    return cmd_collect(cfg)
 
 
 def cmd_digest(cfg):
@@ -572,7 +629,7 @@ def main():
     load_env()
     cfg = load_config()
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["collect", "digest", "run", "loop", "demo"])
+    ap.add_argument("cmd", choices=["collect", "due", "digest", "run", "loop", "demo"])
     ap.add_argument("--every", type=int, default=30, help="minutos entre ciclos (loop)")
     a = ap.parse_args()
     if a.cmd == "demo":
@@ -582,6 +639,8 @@ def main():
         print('Exemplos inseridos em radar_demo.db (NÃO são dados reais). Inicie: python dashboard.py --demo')
     elif a.cmd == "collect":
         cmd_collect(cfg)
+    elif a.cmd == "due":
+        cmd_due(cfg)
     elif a.cmd == "digest":
         cmd_digest(cfg)
     elif a.cmd == "run":

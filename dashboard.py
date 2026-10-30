@@ -8,7 +8,6 @@ import csv
 import io
 import json
 import os
-import re
 import subprocess
 import sys
 import threading
@@ -18,6 +17,8 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
+import agenda
+import clusters
 from radar import HERE, db, load_config, load_env
 from insights import COMPANIES, build_opportunities, mentioned_companies, summarize_sector_trends
 from garimpo import find_gold
@@ -78,6 +79,36 @@ def _match_filter(r, params):
 def fetch_api(route, params, cfg):
     rows, states, all_count, last = _base(params, cfg)
     demo = os.environ.get('RADAR_DEMO', '') == '1'
+    if route == '/api/agenda':
+        return agenda_state()
+    if route == '/api/clusters':
+        mode = params.get('mode', ['auto'])[0]
+        if mode not in ('auto', 'lexical', 'semantic'):
+            mode = 'auto'
+        embedder = None
+        if mode in ('auto', 'semantic'):
+            import semantic
+            embedder = semantic.load_embedder()
+        if mode == 'semantic' and embedder is None:
+            import semantic
+            reason = semantic.status()['reason']
+            return {'groups': [], 'total': 0, 'demo': demo, 'method': 'semântico indisponível',
+                    'error': f'Agrupamento semântico indisponível: {reason}. Use o modo lexical ou instale as dependências opcionais.'}
+        if embedder is not None:
+            groups = semantic.cluster_semantic(rows, embedder)[:50]
+            method = 'semântico multilíngue (modelo local, similaridade de cosseno)'
+        else:
+            groups = clusters.cluster_items(rows)[:50]
+            method = ('lexical por termos em comum (fallback: semântico indisponível)' if mode == 'auto'
+                      else 'lexical por termos em comum')
+        by_id = {r['id']: r for r in rows}
+        for g in groups:
+            g['evidence'] = [{'title': by_id[i]['title'], 'url': by_id[i]['url'],
+                              'source': by_id[i]['source'], 'published': by_id[i]['published']}
+                             for i in g['member_ids'][:5] if i in by_id]
+            del g['member_ids']
+        return {'groups': groups, 'total': len(groups), 'demo': demo, 'method': method,
+                'note': 'Fontes independentes = fontes distintas, não republicações. Agrupamento não prova demanda.'}
     if route == '/api/status':
         with STATE_LOCK:
             return {**COLLECTION_STATE, 'demo': demo, 'last_run': last}
@@ -117,7 +148,12 @@ def fetch_api(route, params, cfg):
         return {'total': len(filtered), 'page': page, 'pages': max(1, (len(filtered)+size-1)//size),
                 'items': filtered[(page-1)*size:page*size], 'demo': demo}
     if route == '/api/gold':
-        findings = find_gold(rows, cfg['themes'], _days(params))
+        grouper = None
+        import semantic
+        embedder = semantic.load_embedder()
+        if embedder is not None:
+            grouper = lambda rs: semantic.cluster_semantic(rs, embedder)
+        findings = find_gold(rows, cfg['themes'], _days(params), grouper=grouper)
         minimum = max(0, min(20, int(params.get('min_direct', ['2'])[0]) if params.get('min_direct', ['2'])[0].isdigit() else 2))
         origin = params.get('origin', ['todos'])[0]
         findings = [r for r in findings if r['direct'] >= minimum and (origin == 'todos' or r['origin'] == origin)]
@@ -164,6 +200,36 @@ def save_note(data, cfg):
                        updated_at=excluded.updated_at""",
                     (ident, status, notes, datetime.now(timezone.utc).isoformat()))
     return {'ok': True, 'id': ident, 'status': status}
+
+
+def agenda_state():
+    con = db()
+    try:
+        return {'agenda': agenda.get_agenda(con),
+                'sources': agenda.source_statuses(con),
+                'lock': agenda.lock_state(con),
+                'allowed_intervals': [60, 360, 720, 1440]}
+    finally:
+        con.close()
+
+
+def save_agenda(data):
+    """Altera a agenda. Aceita apenas 'enabled' (bool) e 'interval_minutes' (inteiro validado)."""
+    if os.environ.get('RADAR_DEMO', '') == '1':
+        raise ValueError('Agendamento desativado no modo demonstração.')
+    unknown = set(data) - {'enabled', 'interval_minutes'}
+    if unknown:
+        raise ValueError(f'Campos não permitidos: {", ".join(sorted(unknown))}')
+    enabled = data.get('enabled')
+    if enabled is not None and not isinstance(enabled, bool):
+        raise ValueError('"enabled" deve ser verdadeiro ou falso')
+    interval = data.get('interval_minutes')
+    con = db()
+    try:
+        agenda.set_agenda(con, interval_minutes=interval, enabled=enabled)
+    finally:
+        con.close()
+    return agenda_state()
 
 
 def _collect_task():
@@ -277,6 +343,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(save_note(data, self.server.config))
             elif path == '/api/collect':
                 self._send(start_collect(), 202)
+            elif path == '/api/agenda':
+                self._send(save_agenda(data))
             else:
                 self._send({'error': 'Rota não encontrada'}, 404)
         except (json.JSONDecodeError, UnicodeError, ValueError) as exc:

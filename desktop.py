@@ -133,12 +133,20 @@ def main(argv=None):
     parser.add_argument('--demo', action='store_true', help='Exemplos fictícios isolados')
     parser.add_argument('--self-test', action='store_true', help='Teste rápido do executável, sem janela')
     parser.add_argument('--collect', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--due', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if args.collect:
         configure_environment(demo=False)
         from radar import cmd_collect, load_config, load_env
         load_env()
         cmd_collect(load_config())
+        return 0
+    if args.due:
+        # Chamado pelo Agendador de Tarefas do Windows: coleta só se a agenda estiver ativa e vencida.
+        configure_environment(demo=False)
+        from radar import cmd_due, load_config, load_env
+        load_env()
+        cmd_due(load_config())
         return 0
     if args.self_test:
         return self_test()

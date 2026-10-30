@@ -1,4 +1,3 @@
-import contextlib
 import json
 import os
 import sqlite3
@@ -10,9 +9,9 @@ from datetime import datetime, timedelta, timezone
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
-from urllib.parse import urlencode
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
+os.environ.setdefault('SETVO_EMBED_DISABLE', '1')  # testes não carregam modelo local
 import radar
 import dashboard
 import rss_compat

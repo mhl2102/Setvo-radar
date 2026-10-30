@@ -5,6 +5,7 @@ import os
 import tempfile
 import unittest
 
+os.environ.setdefault('SETVO_EMBED_DISABLE', '1')  # testes não carregam modelo local
 import radar
 import dashboard
 from garimpo import find_gold
@@ -35,6 +36,38 @@ class GoldTests(unittest.TestCase):
                        kind=kind, published=datetime.now(timezone.utc) - timedelta(days=days))
         r.update(signal='dor' if kind == 'ask' else 'tendencia', sector='Ferramentas para devs', demo=0)
         return r
+
+    def test_relatos_independentes_similares_aparecem_agrupados_num_achado(self):
+        rows = [
+            self.signal('Teams keep re-entering shipment orders manually between systems', 'Ask HN', 'https://example.org/g1'),
+            self.signal('Shipment orders re-entered manually between incompatible systems', 'Reddit', 'https://example.org/g2'),
+        ]
+        result = find_gold(rows, {}, days=30)
+        # Pode ser produzido pelo caminho de frase ou de agrupamento; o que importa é a evidência independente unida.
+        matching = [o for o in result if {e['url'] for e in o['evidence']} >= {'https://example.org/g1', 'https://example.org/g2'}]
+        self.assertTrue(matching, 'nenhum achado reuniu as duas evidências independentes')
+        self.assertGreaterEqual(matching[0]['direct_source_count'], 2)
+        self.assertTrue(all(e['url'].startswith('https://') for e in matching[0]['evidence']))
+
+    def test_agrupamento_de_uma_so_fonte_nao_vira_achado(self):
+        rows = [
+            self.signal('Shipment orders re-entered manually between systems', 'Ask HN', 'https://example.org/h1'),
+            self.signal('Shipment orders re-entered manually between systems again', 'Ask HN', 'https://example.org/h2'),
+        ]
+        result = find_gold(rows, {}, days=30)
+        self.assertFalse([o for o in result if o['origin'] == 'agrupamento de relatos'])
+
+    def test_agrupador_injetado_e_usado(self):
+        rows = [
+            self.signal('Alpha beta gamma workflow problem', 'Ask HN', 'https://example.org/i1'),
+            self.signal('Delta epsilon zeta workflow issue', 'Reddit', 'https://example.org/i2'),
+        ]
+        ids = [r['id'] for r in rows]
+        fake = lambda rs: [{'label': ['tema', 'fake'], 'size': 2, 'sources': 2, 'member_ids': ids}]
+        result = find_gold(rows, {}, days=30, grouper=fake)
+        grouped = [o for o in result if o['origin'] == 'agrupamento de relatos']
+        self.assertEqual(len(grouped), 1)
+        self.assertEqual(grouped[0]['name'], 'Tema · fake')
 
     def test_new_unconfigured_topic_multiple_sources(self):
         rows = [

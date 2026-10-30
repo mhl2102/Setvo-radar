@@ -2,7 +2,6 @@
 import math
 import re
 import unicodedata
-from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 PAIN_PATTERNS = [
