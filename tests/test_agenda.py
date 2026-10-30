@@ -1,8 +1,11 @@
 import os
 import sys
 import tempfile
+import threading
+import json
 import unittest
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
 
@@ -236,3 +239,81 @@ def sqlite_error():
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class AgendaApiTests(unittest.TestCase):
+    """Testa os endpoints /api/agenda com um servidor HTTP real em porta livre."""
+
+    def setUp(self):
+        import dashboard
+        self.temp = tempfile.TemporaryDirectory()
+        self.saved = {k: os.environ.get(k) for k in ('RADAR_DB', 'RADAR_DEMO')}
+        os.environ['RADAR_DB'] = os.path.join(self.temp.name, 'api.db')
+        os.environ['RADAR_DEMO'] = '0'
+        self.server = dashboard.create_server(port=0)
+        self.port = self.server.server_port
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        for k, v in self.saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        self.temp.cleanup()
+
+    def call(self, method, path, body=None, headers=None):
+        conn = HTTPConnection('127.0.0.1', self.port, timeout=10)
+        h = {'Content-Type': 'application/json'} if body is not None else {}
+        h.update(headers or {})
+        raw = json.dumps(body).encode('utf-8') if body is not None else None
+        conn.request(method, path, body=raw, headers=h)
+        resp = conn.getresponse()
+        data = json.loads(resp.read().decode('utf-8'))
+        conn.close()
+        return resp.status, data
+
+    def test_get_retorna_agenda_fontes_e_trava(self):
+        status, data = self.call('GET', '/api/agenda')
+        self.assertEqual(status, 200)
+        self.assertFalse(data['agenda']['enabled'])
+        self.assertEqual(data['sources'], [])
+        self.assertFalse(data['lock']['running'])
+        self.assertIn(360, data['allowed_intervals'])
+
+    def test_post_ativa_e_altera_intervalo(self):
+        status, data = self.call('POST', '/api/agenda', {'enabled': True, 'interval_minutes': 720})
+        self.assertEqual(status, 200)
+        self.assertTrue(data['agenda']['enabled'])
+        self.assertEqual(data['agenda']['interval_minutes'], 720)
+        self.assertIsNotNone(data['agenda']['next_run'])
+        status, data = self.call('POST', '/api/agenda', {'enabled': False})
+        self.assertFalse(data['agenda']['enabled'])
+        self.assertIsNone(data['agenda']['next_run'])
+
+    def test_post_rejeita_entradas_invalidas(self):
+        cases = [
+            {'interval_minutes': 5},
+            {'interval_minutes': 'muito'},
+            {'enabled': 'sim'},
+            {'comando': 'rm -rf /'},
+        ]
+        for body in cases:
+            with self.subTest(body=body):
+                status, data = self.call('POST', '/api/agenda', body)
+                self.assertEqual(status, 400)
+                self.assertIn('error', data)
+
+    def test_post_bloqueado_no_modo_demonstracao(self):
+        os.environ['RADAR_DEMO'] = '1'
+        status, data = self.call('POST', '/api/agenda', {'enabled': True})
+        self.assertEqual(status, 400)
+        self.assertIn('demonstração', data['error'])
+
+    def test_post_de_origem_estranha_e_bloqueado(self):
+        status, data = self.call('POST', '/api/agenda', {'enabled': True},
+                                 headers={'Origin': 'http://site-malicioso.example'})
+        self.assertEqual(status, 403)
