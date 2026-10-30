@@ -1,18 +1,19 @@
 # Ponto de retomada
 
+API de agrupamentos pronta. Próximo: interface (passo 3 abaixo).
+
 ## Verificar antes de qualquer coisa
 ```bash
 git checkout feat/agendamento-coleta
 python -m pyflakes *.py tests/*.py
-python -m unittest discover -s tests -v   # esperado: 58 OK
+python -m unittest discover -s tests -v   # esperado: 60 OK
 ```
 
 ## Próxima ação exata
 Integrar o agrupamento ao painel (P1-2):
-1. Em `dashboard.py`, adicionar `GET /api/clusters?days=30` que carrega os itens do
-   período com `_rows(...)` e devolve `clusters.cluster_items(...)`, limitado a 50 grupos.
-2. Teste HTTP em `tests/test_clusters.py` cobrindo: resposta 200, formato, período vazio.
-3. Na aba Oportunidades, mostrar os grupos com "N fontes independentes" e rótulo de termos.
+1. ✅ `GET /api/clusters?days=30` em `dashboard.py`, com testes HTTP em `tests/test_clusters.py`.
+2. ⬜ Na aba Oportunidades (`web/index.html`, `web/app.js`), mostrar cada grupo com "N fontes independentes", os termos do rótulo e os links de evidência. Sem script inline.
+3. ⬜ Conferir visualmente no navegador (ou registrar que não foi possível).
 
 ## Depois
 P1-4 (demandas fora das palavras-chave) e P1-5 (Gold Finder com pesos configuráveis).

@@ -9,6 +9,7 @@ Comando: `python -m unittest discover -s tests -v` (o mesmo do CI).
 | 2026-10-30 | `a1735a0` | 48/48 | API e painel |
 | 2026-10-30 | `a8a00dc` | 50/50 | estado por feed RSS |
 | 2026-10-30 | `cf04f36` | 58/58 | `--due` e agrupamento lexical |
+| 2026-10-30 | (próximo commit) | 60/60 | API `/api/clusters` |
 
 ## Limites desta verificação
 - Nenhum teste de interface no navegador.

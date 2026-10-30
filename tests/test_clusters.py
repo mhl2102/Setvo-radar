@@ -73,5 +73,71 @@ class ClusterTests(unittest.TestCase):
         self.assertEqual(clusters.cluster_items(items), [])
 
 
+
+class ClusterApiTests(unittest.TestCase):
+    def setUp(self):
+        import json as _json, os as _os, tempfile as _tf, threading as _th
+        from http.client import HTTPConnection as _HC
+        import dashboard
+        self._json, self._HC = _json, _HC
+        self.temp = _tf.TemporaryDirectory()
+        self.saved = {k: _os.environ.get(k) for k in ('RADAR_DB', 'RADAR_DEMO')}
+        _os.environ['RADAR_DB'] = _os.path.join(self.temp.name, 'cl.db')
+        _os.environ['RADAR_DEMO'] = '0'
+        self.server = dashboard.create_server(port=0)
+        self.port = self.server.server_port
+        self.thread = _th.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self):
+        import os as _os
+        self.server.shutdown()
+        self.server.server_close()
+        for k, v in self.saved.items():
+            if v is None:
+                _os.environ.pop(k, None)
+            else:
+                _os.environ[k] = v
+        self.temp.cleanup()
+
+    def get(self, path):
+        conn = self._HC('127.0.0.1', self.port, timeout=10)
+        conn.request('GET', path)
+        resp = conn.getresponse()
+        data = self._json.loads(resp.read().decode('utf-8'))
+        conn.close()
+        return resp.status, data
+
+    def test_endpoint_responde_mesmo_sem_dados(self):
+        status, data = self.get('/api/clusters?days=30')
+        self.assertEqual(status, 200)
+        self.assertEqual(data['groups'], [])
+        self.assertEqual(data['total'], 0)
+        self.assertIn('Não é semântico', data['method'])
+
+    def test_endpoint_agrupa_itens_gravados(self):
+        import radar
+        con = radar.db()
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        for i, (title, src) in enumerate([
+            ('Transportadoras transferem pedidos manualmente entre sistemas', 'Reddit'),
+            ('Pedidos transferidos manualmente entre sistemas incompatíveis', 'Hacker News'),
+            ('Receita de bolo simples', 'Blog')]):
+            con.execute("""INSERT INTO items (id, source, title, url, text, geo, weight, engagement,
+                           kind, published, collected, sector, score, signal, pain_level, demo)
+                           VALUES (?, ?, ?, ?, '', 'global', 1, 0, 'news', ?, ?, 'Logística', 1, 'dor', 1, 0)""",
+                        (f'x{i}', src, title, f'https://exemplo.test/{i}', now, now))
+        con.commit()
+        con.close()
+        status, data = self.get('/api/clusters?days=30')
+        self.assertEqual(status, 200)
+        self.assertEqual(len(data['groups']), 1)
+        group = data['groups'][0]
+        self.assertEqual(group['sources'], 2)
+        self.assertEqual(len(group['evidence']), 2)
+        self.assertTrue(all(e['url'].startswith('https://') for e in group['evidence']))
+
+
 if __name__ == '__main__':
     unittest.main()

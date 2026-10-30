@@ -19,7 +19,7 @@ Legenda de estado: ✅ concluído e testado · 🟡 parcial · ⬜ pendente · �
 | ID | Tarefa | Estado |
 |---|---|---|
 | P1-1 | Agrupamento lexical de publicações | ✅ módulo e testes (`clusters.py`) |
-| P1-2 | Integrar agrupamento ao painel (aba Oportunidades) | ⬜ |
+| P1-2 | Integrar agrupamento ao painel | 🟡 API `GET /api/clusters` pronta e testada; falta exibir na aba Oportunidades |
 | P1-3 | Agrupamento semântico multilíngue (embeddings) | ⬜ depende de decisão de dependência (ver DECISOES) |
 | P1-4 | Detecção de demandas fora das palavras-chave | ⬜ |
 | P1-5 | Gold Finder: pontuação com pesos configuráveis e separação de eixos | ⬜ |

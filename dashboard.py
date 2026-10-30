@@ -18,6 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import agenda
+import clusters
 from radar import HERE, db, load_config, load_env
 from insights import COMPANIES, build_opportunities, mentioned_companies, summarize_sector_trends
 from garimpo import find_gold
@@ -80,6 +81,17 @@ def fetch_api(route, params, cfg):
     demo = os.environ.get('RADAR_DEMO', '') == '1'
     if route == '/api/agenda':
         return agenda_state()
+    if route == '/api/clusters':
+        by_id = {r['id']: r for r in rows}
+        groups = clusters.cluster_items(rows)[:50]
+        for g in groups:
+            g['evidence'] = [{'title': by_id[i]['title'], 'url': by_id[i]['url'],
+                              'source': by_id[i]['source'], 'published': by_id[i]['published']}
+                             for i in g['member_ids'][:5] if i in by_id]
+            del g['member_ids']
+        return {'groups': groups, 'total': len(groups), 'demo': demo,
+                'method': 'Agrupamento lexical por termos em comum. Não é semântico nem entende idiomas diferentes. '
+                          'Fontes independentes = fontes distintas, não republicações.'}
     if route == '/api/status':
         with STATE_LOCK:
             return {**COLLECTION_STATE, 'demo': demo, 'last_run': last}
