@@ -317,3 +317,101 @@ class AgendaApiTests(unittest.TestCase):
         status, data = self.call('POST', '/api/agenda', {'enabled': True},
                                  headers={'Origin': 'http://site-malicioso.example'})
         self.assertEqual(status, 403)
+
+
+RSS_OK = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>t</title>
+<item><title>Empresa lanca agente</title><link>https://exemplo.test/a1</link><description>texto</description></item>
+<item><title>Pedido de integracao</title><link>https://exemplo.test/a2</link><description>texto</description></item>
+</channel></rss>"""
+
+
+class RssPerFeedTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.old_db = os.environ.get('RADAR_DB')
+        os.environ['RADAR_DB'] = os.path.join(self.temp.name, 'rss.db')
+
+    def tearDown(self):
+        if self.old_db is None:
+            os.environ.pop('RADAR_DB', None)
+        else:
+            os.environ['RADAR_DB'] = self.old_db
+        self.temp.cleanup()
+
+    def test_cada_feed_tem_estado_proprio(self):
+        cfg = radar.load_config()
+        cfg['feeds'] = [
+            {'name': 'Quebrado', 'url': 'https://quebrado.test/rss', 'geo': 'global', 'weight': 1},
+            {'name': 'Saudavel', 'url': 'https://saudavel.test/rss', 'geo': 'global', 'weight': 1},
+        ]
+
+        class Resp:
+            def __init__(self, content):
+                self.content = content
+
+            def raise_for_status(self):
+                pass
+
+        def fake_get(url, timeout=None):
+            if 'quebrado' in url:
+                raise ConnectionError('timeout simulado')
+            return Resp(RSS_OK)
+
+        con = radar.db()
+
+        def record(source, ok, count, error):
+            # Mesmo caminho usado por cmd_collect: grava diretamente no banco.
+            agenda.record_source(con, source, ok=ok, count=count, error=error)
+
+        with patch.object(radar.HTTP, 'get', side_effect=fake_get):
+            items = radar.collect_rss(cfg, record=record)
+        radar.save(con, items, cfg)
+        self.assertEqual(len(items), 2)
+        statuses = {s['source']: s for s in agenda.source_statuses(con)}
+        self.assertEqual(statuses['rss:Quebrado']['status'], 'falhou')
+        self.assertIn('timeout simulado', statuses['rss:Quebrado']['last_error'])
+        self.assertEqual(statuses['rss:Saudavel']['status'], 'ok')
+        self.assertEqual(statuses['rss:Saudavel']['last_count'], 2)
+        con.close()
+
+
+class RssCycleIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.old_db = os.environ.get('RADAR_DB')
+        os.environ['RADAR_DB'] = os.path.join(self.temp.name, 'ciclo_rss.db')
+
+    def tearDown(self):
+        if self.old_db is None:
+            os.environ.pop('RADAR_DB', None)
+        else:
+            os.environ['RADAR_DB'] = self.old_db
+        self.temp.cleanup()
+
+    def test_ciclo_grava_estado_de_cada_feed_rss(self):
+        cfg = radar.load_config()
+        cfg['feeds'] = cfg['feeds'][:2]
+        names = [f['name'] for f in cfg['feeds']]
+
+        class Resp:
+            def __init__(self, content):
+                self.content = content
+
+            def raise_for_status(self):
+                pass
+
+        def fake_get(url, timeout=None):
+            if url == cfg['feeds'][0]['url']:
+                raise ConnectionError('fora do ar')
+            return Resp(RSS_OK)
+
+        with patch.object(radar, 'COLLECTORS', (radar.collect_rss,)), \
+                patch.object(radar.HTTP, 'get', side_effect=fake_get):
+            self.assertTrue(radar.cmd_collect(cfg))
+
+        con = radar.db()
+        statuses = {s['source']: s for s in agenda.source_statuses(con)}
+        self.assertEqual(statuses[f'rss:{names[0]}']['status'], 'falhou')
+        self.assertEqual(statuses[f'rss:{names[1]}']['status'], 'ok')
+        self.assertIn('collect_rss', statuses)
+        con.close()

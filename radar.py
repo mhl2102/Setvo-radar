@@ -173,19 +173,27 @@ def feed_date(entry):
 
 
 # ------------------------------------------------------------------ coletores
-def collect_rss(cfg):
+def collect_rss(cfg, record=None):
+    """Coleta os feeds RSS. `record(source, ok, count, error)` é chamado por feed,
+    permitindo monitorar cada fonte individualmente (ex.: 'rss:TechCrunch')."""
     out = []
     for f in cfg["feeds"]:
+        source = f"rss:{f['name']}"
         try:
             r = HTTP.get(f["url"], timeout=20)
             r.raise_for_status()
             feed = feedparser.parse(r.content)
-            for e in feed.entries[:25]:
+            entries = feed.entries[:25]
+            for e in entries:
                 out.append(item(f["name"], e.get("title", ""), e.get("link", ""),
                                 e.get("summary", ""), f["geo"], f["weight"], 0, "news", feed_date(e)))
-            print(f"  [rss] {f['name']}: {len(feed.entries[:25])}")
+            print(f"  [rss] {f['name']}: {len(entries)}")
+            if record:
+                record(source, True, len(entries), "")
         except Exception as ex:
             print(f"  [rss] FALHOU {f['name']}: {str(ex)[:80]}")
+            if record:
+                record(source, False, 0, f"{type(ex).__name__}: {ex}")
     return out
 
 
@@ -560,7 +568,11 @@ def cmd_collect(cfg):
         for fn in COLLECTORS:
             name = fn.__name__
             try:
-                batch = fn(cfg)
+                if fn is collect_rss:
+                    batch = fn(cfg, record=lambda s, ok, c, err: agenda.record_source(
+                        con, s, ok=ok, count=c, error=err, now=now()))
+                else:
+                    batch = fn(cfg)
                 count = save(con, batch, cfg)  # persistência incremental por coletor
                 seen += len(batch)
                 new += count
