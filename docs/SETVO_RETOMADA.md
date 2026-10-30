@@ -1,23 +1,23 @@
-# Setvo — ponto de retomada
+# Ponto de retomada
 
-## Onde está
-Branch de trabalho: `feat/agendamento-coleta` (a partir de `main`, incluindo o commit de limpeza de imports `77efc5f`).
-Último commit: `a1735a0`. Suíte: 48/48 aprovados.
-
-## Como verificar o estado
+## Verificar antes de qualquer coisa
 ```bash
 git checkout feat/agendamento-coleta
 python -m pyflakes *.py tests/*.py
-python -m unittest discover -s tests -v
+python -m unittest discover -s tests -v   # esperado: 58 OK
 ```
 
 ## Próxima ação exata
-Implementar **estado por feed** nos coletores RSS (`collect_rss` em `radar.py`):
-1. Fazer `collect_rss` retornar também o status de cada feed (sucesso/erro, contagem, mensagem).
-2. Gravar cada feed com `agenda.record_source(con, f"rss:{nome}", ...)`.
-3. Adicionar um teste em `tests/test_agenda.py` que simule um feed com erro e outro com sucesso, e verifique os dois registros.
+Integrar o agrupamento ao painel (P1-2):
+1. Em `dashboard.py`, adicionar `GET /api/clusters?days=30` que carrega os itens do
+   período com `_rows(...)` e devolve `clusters.cluster_items(...)`, limitado a 50 grupos.
+2. Teste HTTP em `tests/test_clusters.py` cobrindo: resposta 200, formato, período vazio.
+3. Na aba Oportunidades, mostrar os grupos com "N fontes independentes" e rótulo de termos.
 
-## Pendências antes de publicar
-- Abrir pull request de `feat/agendamento-coleta` para `main` (não foi feito: não há autorização de escrita no GitHub nesta sessão).
-- Registrar a tarefa do Agendador do Windows apenas com consentimento do usuário.
-- Validar o executável e o instalador em um Windows real.
+## Depois
+P1-4 (demandas fora das palavras-chave) e P1-5 (Gold Finder com pesos configuráveis).
+
+## Bloqueios
+- Sem acesso de escrita ao GitHub: push e pull request não feitos.
+- Sem Windows: validação do `.exe` e do instalador pendentes (P0-7, P0-8).
+- Rotinas recorrentes de desenvolvimento não foram criadas: o protocolo exige autorização explícita.
