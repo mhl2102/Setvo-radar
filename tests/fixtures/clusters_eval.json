@@ -1,0 +1,25 @@
+{
+  "_aviso": "Exemplos SINTÉTICOS escritos para teste. Não são relatos reais de usuários nem depoimentos. Rótulo: same=true significa mesmo problema.",
+  "pairs": [
+    {"a": "Transportadora precisa redigitar pedidos no sistema de roteirização", "b": "Redigitar pedidos manualmente entre sistema de roteirização e transportadora", "same": true},
+    {"a": "Controle de estoque do armazém pequeno feito em planilha manual", "b": "Planilha manual para controle de estoque no pequeno armazém", "same": true},
+    {"a": "Faturas de fornecedores chegam em PDF e alguém digita tudo no ERP", "b": "Digitar faturas de fornecedores em PDF no ERP toma horas", "same": true},
+    {"a": "Ajustar rota de entrega quando a frota muda no meio do dia", "b": "Replanejar rotas de entrega com mudança de frota durante o dia", "same": true},
+    {"a": "Conciliar extratos bancários com lançamentos da contabilidade leva dias", "b": "Conciliação de extratos bancários e lançamentos contábeis é manual", "same": true},
+    {"a": "Agendar visitas de vendas sem integração com o calendário do CRM", "b": "Integração do CRM com calendário para agendar visitas comerciais", "same": true},
+    {"a": "Emissão de notas fiscais de devolução exige retrabalho", "b": "Retrabalho na emissão de notas fiscais de devolução de mercadoria", "same": true},
+    {"a": "Pagamento via Pix sem conciliação automática com o caixa", "b": "Conciliação automática de pagamentos Pix com o caixa da loja", "same": true},
+    {"a": "Monitorar temperatura da carga refrigerada sem alerta em tempo real", "b": "Alerta em tempo real para temperatura de carga refrigerada", "same": true},
+    {"a": "Reposição de peças industriais calculada na mão pelo comprador", "b": "Cálculo manual da reposição de peças industriais pelo comprador", "same": true},
+    {"a": "Banco central anuncia nova regra de pagamento instantâneo", "b": "Robô industrial aprende a soldar peças de aço", "same": false},
+    {"a": "Receita de bolo de cenoura com cobertura de chocolate", "b": "Agente de IA para atendimento ao cliente em lojas virtuais", "same": false},
+    {"a": "Startup capta rodada de investimento para expandir operações", "b": "Novo modelo de linguagem supera benchmarks de programação", "same": false},
+    {"a": "Pesquisa sobre cicatrização de feridas em pacientes diabéticos", "b": "Mercado de imóveis residenciais cresce no segundo semestre", "same": false},
+    {"a": "Sistema de ponto eletrônico falha ao sincronizar com folha", "b": "Sistema de rastreamento de satélites detecta anomalias orbitais", "same": false},
+    {"a": "Empresa de logística anuncia novo centro de distribuição", "b": "Empresa de software anuncia nova versão do aplicativo", "same": false},
+    {"a": "Sensor de umidade do galpão envia dados para planilha manual", "b": "Dados de sensor de umidade do galpão sem painel integrado", "same": true},
+    {"a": "Lançamento de smartphone com câmera melhorada", "b": "Lançamento de notebook com tela maior e bateria melhor", "same": false},
+    {"a": "Cliente reclama de prazo de entrega sem informação de rastreio", "b": "Falta de rastreio nas entregas gera reclamações de prazo", "same": true},
+    {"a": "Pesquisa acadêmica sobre redes neurais para visão computacional", "b": "Pesquisa acadêmica sobre visão computacional em drones", "same": false}
+  ]
+}

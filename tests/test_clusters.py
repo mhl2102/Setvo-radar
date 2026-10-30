@@ -13,7 +13,7 @@ def it(i, title, source, text=''):
 class NormalizeTests(unittest.TestCase):
     def test_remove_acentos_e_stopwords(self):
         self.assertEqual(normalize_set('Automação da logística para as transportadoras'),
-                         {'automacao', 'logistica', 'transportadoras'})
+                         {'automa', 'logist', 'transp'})
 
     def test_texto_vazio(self):
         self.assertEqual(clusters.normalize_tokens(None), set())

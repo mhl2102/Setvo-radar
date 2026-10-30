@@ -7,3 +7,13 @@
 .source-status-list small{grid-column:1 / -1}
 .ok-text{color:#1f7a4d}
 .error-text{color:#b42318}
+
+/* Relatos agrupados */
+.cluster-section{margin:24px 0}
+.cluster-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.cluster-card{border:1px solid var(--line,#2a2a2a);border-radius:12px;padding:14px;background:var(--surface,transparent)}
+.term-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.term-chip{font-size:.8rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor;opacity:.85}
+.cluster-card summary{cursor:pointer;margin-top:6px}
+.evidence-list{padding-left:18px;margin:8px 0 0}
+.evidence-list li{margin-bottom:6px}

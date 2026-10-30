@@ -22,15 +22,17 @@ STOPWORDS = {
 }
 
 _TOKEN = re.compile(r'[a-z0-9]{3,}')
+DEFAULT_THRESHOLD = 0.34
+STEM_LEN = 6  # truncamento simples: aproxima flexões (conciliar/conciliação) sem dependências
 
 
 def normalize_tokens(text):
-    """Minúsculas, sem acentos, somente termos de 3+ caracteres, sem stopwords."""
+    """Minúsculas, sem acentos, termos de 3+ caracteres sem stopwords, truncados em STEM_LEN."""
     if not text:
         return set()
     decomposed = unicodedata.normalize('NFKD', str(text).lower())
     ascii_text = ''.join(ch for ch in decomposed if not unicodedata.combining(ch))
-    return {t for t in _TOKEN.findall(ascii_text) if t not in STOPWORDS}
+    return {t[:STEM_LEN] for t in _TOKEN.findall(ascii_text) if t not in STOPWORDS}
 
 
 def jaccard(a, b):
@@ -39,7 +41,7 @@ def jaccard(a, b):
     return len(a & b) / len(a | b)
 
 
-def cluster_items(items, threshold=0.34):
+def cluster_items(items, threshold=DEFAULT_THRESHOLD):
     """Agrupa itens (dicts com id, title, text, source) de forma gulosa.
 
     Cada item entra no primeiro grupo cujo termo representativo tenha similaridade
