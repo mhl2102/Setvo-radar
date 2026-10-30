@@ -148,7 +148,12 @@ def fetch_api(route, params, cfg):
         return {'total': len(filtered), 'page': page, 'pages': max(1, (len(filtered)+size-1)//size),
                 'items': filtered[(page-1)*size:page*size], 'demo': demo}
     if route == '/api/gold':
-        findings = find_gold(rows, cfg['themes'], _days(params))
+        grouper = None
+        import semantic
+        embedder = semantic.load_embedder()
+        if embedder is not None:
+            grouper = lambda rs: semantic.cluster_semantic(rs, embedder)
+        findings = find_gold(rows, cfg['themes'], _days(params), grouper=grouper)
         minimum = max(0, min(20, int(params.get('min_direct', ['2'])[0]) if params.get('min_direct', ['2'])[0].isdigit() else 2))
         origin = params.get('origin', ['todos'])[0]
         findings = [r for r in findings if r['direct'] >= minimum and (origin == 'todos' or r['origin'] == origin)]

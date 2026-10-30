@@ -8,11 +8,13 @@ from datetime import datetime, timedelta, timezone
 import math
 import re
 
+import clusters
 from insights import _as_datetime, matches, mentioned_companies, normalize
 
 # Palavras neutras removidas SOMENTE para descobrir expressões recorrentes.
 STOP = set('''the a an and or of for to in on with from is are was were be this that
 why what how when where who your our their you we i they it its my do does can
+between through across keep kept
 could should would using use new best any ask hn show help request feature please
 there about after before have has not need looking got make more some one two
 which into but as than at by via vs get want want to issue problem hard
@@ -90,7 +92,7 @@ def _evaluate(ident, name, rows, kind='emergente', spec=None, current=None):
     }
 
 
-def find_gold(rows, themes, days=30, current=None):
+def find_gold(rows, themes, days=30, current=None, grouper=None):
     """Faz triagem de hipóteses conhecidas e descobre temas repetidos sem template.
 
     - Apenas publicações recentes e URLs únicas.
@@ -144,4 +146,27 @@ def find_gold(rows, themes, days=30, current=None):
         used.append(seen)
         if len(used) >= 25:
             break
+    # Agrupamentos de relatos diretos (dor/pedido) de fontes independentes.
+    # Entram DEPOIS da desduplicação das frases: um achado já aceito não é substituído.
+    # O agrupador é injetável: lexical por padrão; semântico quando disponível.
+    direct_rows = [r for r in candidates if r.get('signal') in ('dor', 'pedido')]
+    direct_by_id = {r.get('id'): r for r in direct_rows}
+    group_fn = grouper or clusters.cluster_items
+    for group in group_fn(direct_rows):
+        if len(used) >= 25:
+            break
+        if group['sources'] < 2:
+            continue
+        related = [direct_by_id[i] for i in group['member_ids'] if i in direct_by_id]
+        ids = {r.get('id') for r in related}
+        if not ids or any(len(ids & seen) >= len(ids) * .75 for seen in theme_sets):
+            continue
+        if any(len(ids & seen) >= .75 * min(len(ids), len(seen)) for seen in used):
+            continue
+        label = group.get('label') or []
+        name = ' · '.join(label[:3]).capitalize() or 'Grupo de relatos'
+        finding = _evaluate('agrupamento:' + '-'.join(label[:3]), name, related, 'agrupamento de relatos')
+        output.append(finding)
+        used.append(ids)
+
     return sorted(output, key=lambda c: (-c['direct_source_count'], -c['score'], c['name']))
