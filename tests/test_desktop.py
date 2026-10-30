@@ -62,5 +62,14 @@ class DesktopTests(unittest.TestCase):
         self.assertIn('<title>Setvo | Inteligência de Mercado</title>', html)
         self.assertIn('SETVO / V2.3', html)
 
+    def test_due_flag_runs_scheduled_collection_without_window(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict(os.environ, {'LOCALAPPDATA': folder, 'XDG_DATA_HOME': folder}), \
+                    patch('radar.cmd_due') as cmd_due, patch('desktop.run_desktop') as window:
+                self.assertEqual(desktop.main(['--due']), 0)
+                cmd_due.assert_called_once()
+                window.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()
