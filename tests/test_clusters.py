@@ -81,9 +81,13 @@ class ClusterApiTests(unittest.TestCase):
         import dashboard
         self._json, self._HC = _json, _HC
         self.temp = _tf.TemporaryDirectory()
-        self.saved = {k: _os.environ.get(k) for k in ('RADAR_DB', 'RADAR_DEMO')}
+        self.saved = {k: _os.environ.get(k) for k in ('RADAR_DB', 'RADAR_DEMO', 'SETVO_EMBED_DISABLE')}
         _os.environ['RADAR_DB'] = _os.path.join(self.temp.name, 'cl.db')
         _os.environ['RADAR_DEMO'] = '0'
+        # Testes da API não devem depender do modelo instalado no ambiente.
+        _os.environ['SETVO_EMBED_DISABLE'] = '1'
+        import semantic
+        semantic.reset()
         self.server = dashboard.create_server(port=0)
         self.port = self.server.server_port
         self.thread = _th.Thread(target=self.server.serve_forever, daemon=True)
@@ -91,6 +95,8 @@ class ClusterApiTests(unittest.TestCase):
 
     def tearDown(self):
         import os as _os
+        import semantic
+        semantic.reset()
         self.server.shutdown()
         self.server.server_close()
         for k, v in self.saved.items():
@@ -113,7 +119,8 @@ class ClusterApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data['groups'], [])
         self.assertEqual(data['total'], 0)
-        self.assertIn('Não é semântico', data['method'])
+        self.assertEqual(data['method'], 'lexical por termos em comum (fallback: semântico indisponível)')
+        self.assertIn('Fontes independentes', data['note'])
 
     def test_endpoint_agrupa_itens_gravados(self):
         import radar
@@ -137,6 +144,13 @@ class ClusterApiTests(unittest.TestCase):
         self.assertEqual(group['sources'], 2)
         self.assertEqual(len(group['evidence']), 2)
         self.assertTrue(all(e['url'].startswith('https://') for e in group['evidence']))
+
+
+    def test_modo_semantico_sem_modelo_informa_erro_claro(self):
+        status, data = self.get('/api/clusters?days=30&mode=semantic')
+        self.assertEqual(status, 200)
+        self.assertEqual(data['groups'], [])
+        self.assertIn('indisponível', data['error'])
 
 
 if __name__ == '__main__':

@@ -82,16 +82,33 @@ def fetch_api(route, params, cfg):
     if route == '/api/agenda':
         return agenda_state()
     if route == '/api/clusters':
+        mode = params.get('mode', ['auto'])[0]
+        if mode not in ('auto', 'lexical', 'semantic'):
+            mode = 'auto'
+        embedder = None
+        if mode in ('auto', 'semantic'):
+            import semantic
+            embedder = semantic.load_embedder()
+        if mode == 'semantic' and embedder is None:
+            import semantic
+            reason = semantic.status()['reason']
+            return {'groups': [], 'total': 0, 'demo': demo, 'method': 'semântico indisponível',
+                    'error': f'Agrupamento semântico indisponível: {reason}. Use o modo lexical ou instale as dependências opcionais.'}
+        if embedder is not None:
+            groups = semantic.cluster_semantic(rows, embedder)[:50]
+            method = 'semântico multilíngue (modelo local, similaridade de cosseno)'
+        else:
+            groups = clusters.cluster_items(rows)[:50]
+            method = ('lexical por termos em comum (fallback: semântico indisponível)' if mode == 'auto'
+                      else 'lexical por termos em comum')
         by_id = {r['id']: r for r in rows}
-        groups = clusters.cluster_items(rows)[:50]
         for g in groups:
             g['evidence'] = [{'title': by_id[i]['title'], 'url': by_id[i]['url'],
                               'source': by_id[i]['source'], 'published': by_id[i]['published']}
                              for i in g['member_ids'][:5] if i in by_id]
             del g['member_ids']
-        return {'groups': groups, 'total': len(groups), 'demo': demo,
-                'method': 'Agrupamento lexical por termos em comum. Não é semântico nem entende idiomas diferentes. '
-                          'Fontes independentes = fontes distintas, não republicações.'}
+        return {'groups': groups, 'total': len(groups), 'demo': demo, 'method': method,
+                'note': 'Fontes independentes = fontes distintas, não republicações. Agrupamento não prova demanda.'}
     if route == '/api/status':
         with STATE_LOCK:
             return {**COLLECTION_STATE, 'demo': demo, 'last_run': last}

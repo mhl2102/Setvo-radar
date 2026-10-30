@@ -1,0 +1,15 @@
+{
+  "_aviso": "Exemplos SINTÉTICOS para teste multilíngue. Não são relatos reais.",
+  "pairs": [
+    {"a": "Transportadoras redigitam pedidos entre sistemas incompatíveis", "b": "Carriers re-enter orders manually between incompatible systems", "same": true},
+    {"a": "Controle de estoque feito em planilha no pequeno armazém", "b": "Small warehouse tracks inventory with a manual spreadsheet", "same": true},
+    {"a": "Digitar faturas de fornecedores em PDF no ERP leva horas", "b": "Typing supplier invoices from PDFs into the ERP takes hours", "same": true},
+    {"a": "Replanejar rotas quando a frota muda durante o dia", "b": "Rerouting deliveries when the fleet changes mid-day", "same": true},
+    {"a": "Alerta em tempo real para temperatura de carga refrigerada", "b": "Real-time alerts for cold chain temperature excursions", "same": true},
+    {"a": "Falta de rastreio nas entregas gera reclamações", "b": "Customers complain because deliveries lack tracking updates", "same": true},
+    {"a": "Banco central anuncia nova regra de pagamento instantâneo", "b": "Robô industrial aprende a soldar peças de aço", "same": false},
+    {"a": "Receita de bolo de cenoura com cobertura", "b": "Agente de IA para atendimento em lojas virtuais", "same": false},
+    {"a": "Startup capta rodada de investimento", "b": "New language model tops programming benchmarks", "same": false},
+    {"a": "Mercado de imóveis cresce no segundo semestre", "b": "Satellite constellation detects orbital anomalies", "same": false}
+  ]
+}
