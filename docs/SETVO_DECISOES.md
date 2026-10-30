@@ -21,3 +21,18 @@ tamanho do modelo, hardware do usuário e custo; essa escolha fica pendente (P1-
 ## D5 — Estado por coletor, com RSS por feed
 Só o RSS foi detalhado por feed, porque é o coletor com mais fontes independentes.
 Os demais coletores continuam com estado agregado.
+
+## D6 — Agrupamento semântico opcional, com fallback lexical
+Benchmark (docs/SETVO_TESTES.md): modelo `paraphrase-multilingual-MiniLM-L12-v2`, CPU, ~7 ms por texto.
+Em pares de idiomas diferentes, o lexical não encontra nenhum par; o semântico encontra todos.
+Decisão: o semântico é opcional. O modelo e o PyTorch somam centenas de MB e não são
+empacotados no .exe por padrão. Sem as dependências, o sistema usa o lexical e informa o método.
+Limiar 0,65 escolhido no benchmark, com conjunto pequeno: é um ponto de partida, não uma calibração.
+
+## D7 — Truncamento de termos em 6 caracteres
+Aproxima flexões sem dependências. Ganho no conjunto sintético (0,90→0,92 de precisão; 0,75→0,92 de revocação).
+Risco: palavras distintas com o mesmo prefixo se fundem. Aceito e documentado.
+
+## D8 — Agrupamentos entram após a desduplicação de frases no Gold Finder
+Motivo: o desduplicador prefere nomes longos; sem essa ordem, um agrupamento sem
+qualidade de nome substituiria um achado de frase já validado.
