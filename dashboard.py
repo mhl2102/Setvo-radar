@@ -8,7 +8,6 @@ import csv
 import io
 import json
 import os
-import re
 import subprocess
 import sys
 import threading

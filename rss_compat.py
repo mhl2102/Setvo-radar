@@ -3,7 +3,6 @@ Sem dependência externa. Compatível apenas com os campos usados pelo radar.
 """
 from email.utils import parsedate_to_datetime
 from datetime import datetime, timezone
-import calendar
 import xml.etree.ElementTree as ET
 
 
